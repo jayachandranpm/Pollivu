@@ -1,0 +1,85 @@
+/* Skeleton Loading Animation */
+.skeleton {
+    background: #D1FAE5;
+    background: linear-gradient(90deg, #D1FAE5 25%, #ECFDF5 50%, #D1FAE5 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+    .skeleton {
+        background: #064E3B;
+        background: linear-gradient(90deg, #064E3B 25%, #065F46 50%, #064E3B 75%);
+        background-size: 200% 100%;
+    }
+}
+
+/* Shapes & Sizes */
+.skeleton-text {
+    height: 1em;
+    width: 80%;
+    margin-bottom: 0.5em;
+}
+
+.skeleton-text.short {
+    width: 60%;
+}
+
+.skeleton-text.long {
+    width: 100%;
+}
+
+.skeleton-title {
+    height: 2em;
+    width: 70%;
+    margin-bottom: 1em;
+}
+
+.skeleton-card {
+    width: 100%;
+    height: 200px;
+    border-radius: 12px;
+}
+
+.skeleton-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.skeleton-btn {
+    width: 120px;
+    height: 40px;
+}
+
+.skeleton-input {
+    width: 100%;
+    height: 42px;
+}
+
+/* Poll Specific Skeletons */
+.poll-skeleton-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.poll-option-skeleton {
+    height: 56px;
+    width: 100%;
+    margin-bottom: 12px;
+    border-radius: 12px;
+}

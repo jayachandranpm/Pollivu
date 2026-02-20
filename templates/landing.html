@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Pollivu - Anonymous polling made simple. No signup, no tracking, just honest opinions.">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Pollivu - Honest Voices, Zero Barriers">
+    <meta property="og:description" content="Create anonymous polls in seconds. No signup required.">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pollivu">
+    <meta name="twitter:description" content="Create anonymous polls in seconds.">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Pollivu - Honest Voices, Zero Barriers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing-new.css') }}">
+</head>
+
+<body>
+    {% from 'components/icons.html' import icon %}
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-container">
+            <div class="header-content">
+                <a href="{{ url_for('main.landing') }}" class="logo">
+                    Pollivu
+                </a>
+
+                <nav class="nav-desktop">
+                    <button data-scroll="features">Features</button>
+                    <button data-scroll="how-it-works">How It Works</button>
+                    <button data-scroll="transparency">Transparency</button>
+                    <button data-scroll="use-cases">Use Cases</button>
+                </nav>
+
+                <div class="header-actions">
+                    <a href="{{ url_for('polls.create_poll') }}" class="btn-primary btn-header">Get Started</a>
+                    <button class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="Toggle menu">
+                        {{ icon('menu', size=24, class="menu-icon") }}
+                        {{ icon('x', size=24, class="close-icon hidden") }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <nav class="nav-mobile hidden" id="mobile-menu">
+                <button data-scroll="features">Features</button>
+                <button data-scroll="how-it-works">How It Works</button>
+                <button data-scroll="transparency">Transparency</button>
+                <button data-scroll="use-cases">Use Cases</button>
+                <a href="{{ url_for('polls.create_poll') }}" class="btn-primary">Get Started</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-bg">
+                <div class="hero-blob hero-blob-1"></div>
+                <div class="hero-blob hero-blob-2"></div>
+                <div class="hero-blob hero-blob-3"></div>
+            </div>
+
+            <div class="hero-top-bar">
+                <span class="hero-label hero-label-accent">Pollivu</span>
+                <span class="hero-label hero-label-hidden">Privacy First</span>
+                <span class="hero-label">2026</span>
+            </div>
+
+            <div class="hero-content">
+                <div class="animate-on-scroll">
+                    <h1 class="hero-title hero-title-dark">HONEST</h1>
+                </div>
+                <div class="animate-on-scroll" style="--delay: 0.1s">
+                    <div class="hero-title-accent-wrapper">
+                        <h1 class="hero-title hero-title-accent">VOICES</h1>
+                        <div class="hero-title-glow"></div>
+                    </div>
+                </div>
+                <div class="animate-on-scroll" style="--delay: 0.2s">
+                    <h1 class="hero-title hero-title-muted">ZERO BARRIERS</h1>
+                </div>
+
+                <div class="animate-on-scroll" style="--delay: 0.4s">
+                    <p class="hero-subtitle">
+                        Capture authentic feedback instantly. No accounts. No tracking. <br class="hidden-mobile">
+                        Just pure, unfiltered data.
+                    </p>
+                </div>
+
+                <div class="animate-on-scroll hero-buttons" style="--delay: 0.6s">
+                    <a href="{{ url_for('polls.create_poll') }}" class="btn-primary btn-large">
+                        <span>LAUNCH POLL</span>
+                        {{ icon('arrow_right', size=20) }}
+                    </a>
+                    <button data-scroll="how-it-works" class="btn-text">Explore The System</button>
+                </div>
+            </div>
+
+            <div class="hero-bottom-bar">
+                <div class="hero-line"></div>
+                <span class="scroll-indicator">Scroll to explore</span>
+                <div class="hero-line"></div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="features">
+            <div class="container">
+                <div class="section-header">
+                    <div class="animate-on-scroll">
+                        <h2 class="section-title">KEY<br><span class="text-accent">FEATURES</span></h2>
+                    </div>
+                    <div class="animate-on-scroll" style="--delay: 0.2s">
+                        <p class="section-subtitle">Engineered for speed and anonymity. <br>Everything you need, nothing
+                            you don't.</p>
+                    </div>
+                </div>
+
+                <div class="features-grid">
+                    <article class="feature-card animate-on-scroll" style="--delay: 0s">
+                        <div class="feature-card-inner">
+                            <div class="feature-header">
+                                <span class="feature-number">01</span>
+                                {{ icon('zap', size=20, class="feature-icon pulse") }}
+                            </div>
+                            <h3 class="feature-title">Instant Creation</h3>
+                            <p class="feature-description">Create polls in seconds with our streamlined interface. No
+                                complex setup, no learning curve—just straightforward polling.</p>
+                            <div class="feature-footer">
+                                {{ icon('check', size=14) }}
+                                <span>Ready to use</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="feature-card animate-on-scroll" style="--delay: 0.1s">
+                        <div class="feature-card-inner">
+                            <div class="feature-header">
+                                <span class="feature-number">02</span>
+                            </div>
+                            <h3 class="feature-title">Anonymous Responses</h3>
+                            <p class="feature-description">Respondents never need to sign up or provide personal
+                                information. Their privacy is protected by design.</p>
+                            <div class="feature-footer">
+                                {{ icon('check', size=14) }}
+                                <span>Ready to use</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="feature-card animate-on-scroll" style="--delay: 0.2s">
+                        <div class="feature-card-inner">
+                            <div class="feature-header">
+                                <span class="feature-number">03</span>
+                                {{ icon('zap', size=20, class="feature-icon pulse") }}
+                            </div>
+                            <h3 class="feature-title">Real-Time Results</h3>
+                            <p class="feature-description">Watch responses roll in live. Dynamic charts and
+                                visualizations update as votes are cast, giving you immediate insights.</p>
+                            <div class="feature-footer">
+                                {{ icon('check', size=14) }}
+                                <span>Ready to use</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="feature-card animate-on-scroll" style="--delay: 0.3s">
+                        <div class="feature-card-inner">
+                            <div class="feature-header">
+                                <span class="feature-number">04</span>
+                            </div>
+                            <h3 class="feature-title">Easy Sharing</h3>
+                            <p class="feature-description">Share your poll with a simple link. Works everywhere—social
+                                media, email, QR codes, or embedded on your website.</p>
+                            <div class="feature-footer">
+                                {{ icon('check', size=14) }}
+                                <span>Ready to use</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="feature-card animate-on-scroll" style="--delay: 0.4s">
+                        <div class="feature-card-inner">
+                            <div class="feature-header">
+                                <span class="feature-number">05</span>
+                            </div>
+                            <h3 class="feature-title">End-to-End Encryption</h3>
+                            <p class="feature-description">All data is encrypted using AES-256 encryption. Your poll
+                                data is secure and tamper-proof from start to finish.</p>
+                            <div class="feature-footer">
+                                {{ icon('check', size=14) }}
+                                <span>Ready to use</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="feature-card animate-on-scroll" style="--delay: 0.5s">
+                        <div class="feature-card-inner">
+                            <div class="feature-header">
+                                <span class="feature-number">06</span>
+                                {{ icon('zap', size=20, class="feature-icon pulse") }}
+                            </div>
+                            <h3 class="feature-title">Auto-Expiring Polls</h3>
+                            <p class="feature-description">Set an expiration time for your polls. Data is automatically
+                                deleted after the poll closes, ensuring complete privacy.</p>
+                            <div class="feature-footer">
+                                {{ icon('check', size=14) }}
+                                <span>Ready to use</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI-Powered Section -->
+        <section id="ai-powered" class="ai-powered">
+            <div class="container">
+                <div class="ai-section-grid">
+                    <div class="ai-section-content animate-on-scroll">
+                        <div class="ai-badge">
+                            {{ icon('sidebar_ai', size=20) }}
+                            <span>AI-Powered</span>
+                        </div>
+                        <h2 class="ai-section-title">Create Polls with <br><span class="text-gradient">AI
+                                Assistance</span></h2>
+                        <p class="ai-section-subtitle">Bring Your Own Key (BYOK) — Use your own API keys for complete
+                            control
+                            over your AI experience. Support for cloud providers and local models.</p>
+
+                        <div class="ai-providers">
+                            <div class="ai-provider animate-on-scroll" style="--delay: 0.1s">
+                                <div class="ai-provider-icon gemini">
+                                    {{ icon('gemini', size=24) }}
+                                </div>
+                                <div class="ai-provider-info">
+                                    <h4>Google Gemini</h4>
+                                    <p>2.5 Flash · 2.5 Pro · 3 Flash · 3 Pro</p>
+                                </div>
+                            </div>
+                            <div class="ai-provider animate-on-scroll" style="--delay: 0.2s">
+                                <div class="ai-provider-icon openai">
+                                    {{ icon('openai', size=24) }}
+                                </div>
+                                <div class="ai-provider-info">
+                                    <h4>OpenAI</h4>
+                                    <p>GPT-5.2 · GPT-4.1 · GPT-4o</p>
+                                </div>
+                            </div>
+                            <div class="ai-provider animate-on-scroll" style="--delay: 0.3s">
+                                <div class="ai-provider-icon claude">
+                                    {{ icon('claude', size=24) }}
+                                </div>
+                                <div class="ai-provider-info">
+                                    <h4>Anthropic Claude</h4>
+                                    <p>Opus 4.6 · Sonnet 4.5 · Haiku 4.5</p>
+                                </div>
+                            </div>
+                            <div class="ai-provider animate-on-scroll" style="--delay: 0.4s">
+                                <div class="ai-provider-icon ollama">
+                                    {{ icon('ollama', size=24) }}
+                                </div>
+                                <div class="ai-provider-info">
+                                    <h4>Ollama (Local)</h4>
+                                    <p>Run AI locally — 100% private</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <a href="{{ url_for('auth.register') }}" class="btn-primary btn-ai">
+                            <span>Get Started with AI</span>
+                            {{ icon('arrow_right', size=18) }}
+                        </a>
+                    </div>
+
+                    <div class="ai-section-visual animate-on-scroll" style="--delay: 0.3s">
+                        <div class="ai-demo-card">
+                            <div class="ai-demo-header">
+                                <div class="ai-demo-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <span class="ai-demo-title">AI Poll Generator</span>
+                            </div>
+                            <div class="ai-demo-content">
+                                <div class="ai-demo-input">
+                                    <span class="ai-demo-label">Topic</span>
+                                    <div class="ai-demo-text">"Best programming language for beginners"</div>
+                                </div>
+                                <div class="ai-demo-output">
+                                    <div class="ai-demo-generating">
+                                        <div class="ai-spark"></div>
+                                        <span>AI Generated Poll</span>
+                                    </div>
+                                    <div class="ai-demo-question">
+                                        <strong>Which programming language would you recommend for beginners?</strong>
+                                    </div>
+                                    <div class="ai-demo-options">
+                                        <div class="ai-demo-option">🐍 Python — Easy syntax, great for data science
+                                        </div>
+                                        <div class="ai-demo-option">🌐 JavaScript — Build web apps immediately</div>
+                                        <div class="ai-demo-option">☕ Java — Strong fundamentals, widely used</div>
+                                        <div class="ai-demo-option">🦀 Rust — Modern, safe, and performant</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-byok-badge">
+                            {{ icon('key', size=16) }}
+                            <span>BYOK — Your Keys, Your Control</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="how-it-works">
+            <div class="how-it-works-bg"></div>
+            <div class="container">
+                <div class="animate-on-scroll section-header-center">
+                    <span class="section-tag">How It Works</span>
+                    <h2 class="section-title-center">Simple <span class="text-gradient">Steps</span></h2>
+                </div>
+
+                <div class="steps-container">
+                    <div class="steps-line"></div>
+
+                    <!-- Step 1 -->
+                    <div class="step step-left">
+                        <div class="step-image animate-on-scroll">
+                            <div class="step-image-frame">
+                                <div class="step-number-badge">1</div>
+                                <div class="step-image-placeholder">
+                                    {{ icon('clipboard_edit', size=64, stroke_width=1) }}
+                                </div>
+                                <div class="step-corner step-corner-tl"></div>
+                                <div class="step-corner step-corner-br"></div>
+                            </div>
+                        </div>
+                        <div class="step-content animate-on-scroll" style="--delay: 0.2s">
+                            <div class="step-label">
+                                <div class="step-label-line"></div>
+                                <span>Step 1</span>
+                            </div>
+                            <h3 class="step-title">Create Your Poll</h3>
+                            <p class="step-description">Simply type your question and add answer options. Customize
+                                settings like duration, multiple selections, or required responses. It takes less than a
+                                minute.</p>
+                            <a href="{{ url_for('polls.create_poll') }}" class="btn-link">
+                                <span>Get Started</span>
+                                {{ icon('arrow_right', size=16) }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="step step-right">
+                        <div class="step-image animate-on-scroll">
+                            <div class="step-image-frame">
+                                <div class="step-number-badge">2</div>
+                                <div class="step-image-placeholder">
+                                    {{ icon('share', size=64, stroke_width=1) }}
+                                </div>
+                                <div class="step-corner step-corner-tl"></div>
+                                <div class="step-corner step-corner-br"></div>
+                            </div>
+                        </div>
+                        <div class="step-content animate-on-scroll" style="--delay: 0.2s">
+                            <div class="step-label">
+                                <div class="step-label-line"></div>
+                                <span>Step 2</span>
+                            </div>
+                            <h3 class="step-title">Share the Link</h3>
+                            <p class="step-description">Get your unique poll link instantly. Share it via email, social
+                                media, messaging apps, or embed it on your website. No downloads required for
+                                respondents.</p>
+                            <a href="{{ url_for('polls.create_poll') }}" class="btn-link">
+                                <span>Share Now</span>
+                                {{ icon('arrow_right', size=16) }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="step step-left">
+                        <div class="step-image animate-on-scroll">
+                            <div class="step-image-frame">
+                                <div class="step-number-badge">3</div>
+                                <div class="step-image-placeholder">
+                                    {{ icon('poll', size=64, stroke_width=1) }}
+                                </div>
+                                <div class="step-corner step-corner-tl"></div>
+                                <div class="step-corner step-corner-br"></div>
+                            </div>
+                        </div>
+                        <div class="step-content animate-on-scroll" style="--delay: 0.2s">
+                            <div class="step-label">
+                                <div class="step-label-line"></div>
+                                <span>Step 3</span>
+                            </div>
+                            <h3 class="step-title">Collect & Analyze</h3>
+                            <p class="step-description">Watch responses come in real-time with beautiful visualizations.
+                                Export results, filter by time period, and make data-driven decisions instantly.</p>
+                            <a href="{{ url_for('polls.create_poll') }}" class="btn-link">
+                                <span>View Demo</span>
+                                {{ icon('arrow_right', size=16) }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Transparency Section -->
+        <section id="transparency" class="transparency">
+            <div class="transparency-grid-bg"></div>
+            <div class="container">
+                <div class="transparency-grid">
+                    <div class="transparency-content">
+                        <div class="animate-on-scroll">
+                            <div class="privacy-badge">
+                                {{ icon('shield', size=16) }}
+                                <span>Privacy First</span>
+                            </div>
+                            <h2 class="transparency-title">Built on <br><span class="text-gradient-light">Trust</span>
+                            </h2>
+                            <p class="transparency-subtitle">We believe privacy isn't just a feature—it's a fundamental
+                                right. Pollivu operates with complete transparency and zero data collection.</p>
+                        </div>
+
+                        <div class="privacy-features">
+                            <div class="privacy-feature animate-on-scroll" style="--delay: 0s">
+                                {{ icon('privacy_eye', size=32) }}
+                                <h4>No Tracking</h4>
+                                <p>We never ask for names, emails, or identifying info.</p>
+                            </div>
+                            <div class="privacy-feature animate-on-scroll" style="--delay: 0.1s">
+                                {{ icon('lock', size=32) }}
+                                <h4>AES-256</h4>
+                                <p>End-to-end encryption ensures tamper-proof responses.</p>
+                            </div>
+                            <div class="privacy-feature animate-on-scroll" style="--delay: 0.2s">
+                                {{ icon('clock', size=32) }}
+                                <h4>Auto-Expiry</h4>
+                                <p>Data self-destructs after the poll closes.</p>
+                            </div>
+                            <div class="privacy-feature animate-on-scroll" style="--delay: 0.3s">
+                                {{ icon('git_branch', size=32) }}
+                                <h4>Open Source</h4>
+                                <p>Our core logic is verifiable by anyone.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="transparency-visual animate-on-scroll" style="--delay: 0.3s">
+                        <div class="data-block">
+                            <div class="data-block-icon">
+                                {{ icon('lock', size=120, stroke_width=1, opacity=0.2) }}
+                            </div>
+                            <div class="data-block-content">
+                                <div class="data-meter">
+                                    <div class="data-meter-labels">
+                                        <span>Your Protection Level</span>
+                                        <span class="text-accent">MAXIMUM</span>
+                                    </div>
+                                    <div class="data-meter-bar">
+                                        <div class="data-meter-fill pulse"></div>
+                                    </div>
+                                </div>
+
+                                <div class="privacy-checklist">
+                                    <div class="privacy-check-item">
+                                        {{ icon('check', size=20) }}
+                                        <span>We don't know who you are</span>
+                                    </div>
+                                    <div class="privacy-check-item">
+                                        {{ icon('check', size=20) }}
+                                        <span>Your location stays hidden</span>
+                                    </div>
+                                    <div class="privacy-check-item">
+                                        {{ icon('check', size=20) }}
+                                        <span>No cookies tracking you</span>
+                                    </div>
+                                    <div class="privacy-check-item">
+                                        {{ icon('check', size=20) }}
+                                        <span>Bank-level security protection</span>
+                                    </div>
+                                </div>
+
+                                <div class="data-status">
+                                    <div class="status-dot"></div>
+                                    <span>Your Privacy is Protected</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Use Cases Section -->
+        <section id="use-cases" class="use-cases">
+            <div class="container">
+                <div class="section-header">
+                    <div class="animate-on-scroll">
+                        <h2 class="section-title">Real World<br><span class="text-accent">Use Cases</span></h2>
+                    </div>
+                    <div class="animate-on-scroll" style="--delay: 0.2s">
+                        <button class="btn-outline">
+                            {{ icon('compass', size=18) }}
+                            <span>Explore Use Cases</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="use-cases-grid">
+                    <article class="use-case-card animate-on-scroll" style="--delay: 0s">
+                        <div class="use-case-tape"></div>
+                        <div class="use-case-image">
+                            {{ icon('users', size=80, stroke_width=1) }}
+                        </div>
+                        <div class="use-case-content">
+                            <div class="use-case-meta">
+                                <span class="use-case-category">TEAM DECISIONS</span>
+                                <span class="use-case-number">#001</span>
+                            </div>
+                            <h3 class="use-case-title">Team Decision Making</h3>
+                            <p class="use-case-description">Let your team vote on project choices, tool picks, or
+                                company policies—anonymously, so everyone shares their honest opinion without pressure.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="use-case-card use-case-offset animate-on-scroll" style="--delay: 0.15s">
+                        <div class="use-case-tape"></div>
+                        <div class="use-case-image">
+                            {{ icon('book', size=80, stroke_width=1) }}
+                        </div>
+                        <div class="use-case-content">
+                            <div class="use-case-meta">
+                                <span class="use-case-category">EDUCATION</span>
+                                <span class="use-case-number">#002</span>
+                            </div>
+                            <h3 class="use-case-title">Classroom Engagement</h3>
+                            <p class="use-case-description">Teachers can quiz students or collect opinions instantly—no
+                                accounts needed. Students respond freely without worrying about being identified.</p>
+                        </div>
+                    </article>
+
+                    <article class="use-case-card animate-on-scroll" style="--delay: 0.3s">
+                        <div class="use-case-tape"></div>
+                        <div class="use-case-image">
+                            {{ icon('calendar', size=80, stroke_width=1) }}
+                        </div>
+                        <div class="use-case-content">
+                            <div class="use-case-meta">
+                                <span class="use-case-category">EVENTS</span>
+                                <span class="use-case-number">#003</span>
+                            </div>
+                            <h3 class="use-case-title">Event Planning</h3>
+                            <p class="use-case-description">Planning a party, meeting, or get-together? Share a link and
+                                let everyone vote on dates, places, or activities—no sign-ups required.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section id="cta" class="cta">
+            <div class="cta-bg"></div>
+            <div class="cta-overlay"></div>
+            <div class="cta-content">
+                <div class="animate-on-scroll">
+                    <h2 class="cta-title">START</h2>
+                </div>
+                <div class="animate-on-scroll" style="--delay: 0.1s">
+                    <p class="cta-subtitle">No signup. No data collection. <br>Just instant, honest feedback.</p>
+                </div>
+                <div class="animate-on-scroll cta-buttons" style="--delay: 0.2s">
+                    <a href="{{ url_for('polls.create_poll') }}" class="btn-cta-primary">CREATE POLL NOW</a>
+                    <a href="{{ url_for('main.privacy') }}" class="btn-cta-secondary">READ THE DOCS</a>
+                </div>
+                <div class="cta-stats">
+                    <div class="cta-stat">
+                        <div class="cta-stat-value">0s</div>
+                        <div class="cta-stat-label">Setup Time</div>
+                    </div>
+                    <div class="cta-stat">
+                        <div class="cta-stat-value">$0</div>
+                        <div class="cta-stat-label">Cost</div>
+                    </div>
+                    <div class="cta-stat">
+                        <div class="cta-stat-value">100%</div>
+                        <div class="cta-stat-label">Privacy</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-col footer-brand">
+                    <a href="{{ url_for('main.landing') }}" class="logo">
+                        Pollivu
+                    </a>
+                    <p>The most privacy-focused polling platform. Open source, secure, and free.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a href="#features">Features</a>
+                    <a href="#how-it-works">How It Works</a>
+                    <a href="#use-cases">Use Cases</a>
+                    <a href="{{ url_for('polls.create_poll') }}">Create Poll</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Resources</h4>
+                    <a href="{{ url_for('main.privacy') }}">Privacy Policy</a>
+                    <a href="{{ url_for('main.privacy') }}">Terms of Service</a>
+                    <a href="{{ url_for('auth.login') }}">Login</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Connect</h4>
+                    <a href="mailto:hello@pollivu.com">hello@pollivu.com</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Pollivu. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/pollivu.js') }}?v=2"></script>
+    <script>
+        // Smooth scrolling for navigation
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                const headerOffset = 80;
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
+
+                // Close mobile menu if open
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (!mobileMenu.classList.contains('hidden')) {
+                    toggleMobileMenu();
+                }
+            }
+        }
+
+        // Bind data-scroll buttons (CSP-safe, no inline onclick)
+        document.querySelectorAll('[data-scroll]').forEach(btn => {
+            btn.addEventListener('click', () => scrollToSection(btn.dataset.scroll));
+        });
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const menuIcon = document.querySelector('.menu-icon');
+            const closeIcon = document.querySelector('.close-icon');
+
+            menu.classList.toggle('hidden');
+            menuIcon.classList.toggle('hidden');
+            closeIcon.classList.toggle('hidden');
+
+            if (!menu.classList.contains('hidden')) {
+                menu.style.display = 'flex';
+            }
+        }
+
+        document.getElementById('mobile-menu-toggle')?.addEventListener('click', toggleMobileMenu);
+    </script>
+</body>
+
+</html>

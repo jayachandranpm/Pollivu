@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pollivu - Create anonymous polls in seconds.">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>{% block title %}Pollivu{% endblock %}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/toast.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/skeleton.css') }}">
+    {% block extra_css %}{% endblock %}
+
+    <!-- Clear legacy sidebar state -->
+    <script>localStorage.removeItem('sidebarCollapsed');</script>
+</head>
+
+<body class="app-layout">
+    {% from 'components/icons.html' import icon %}
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Home / Brand -->
+        <a href="{{ url_for('main.landing') }}"
+            class="nav-btn {% if request.endpoint == 'main.landing' %}active-bright{% endif %}" title="Home">
+            {{ icon('sidebar_home', size=20, stroke_width=1.8) }}
+            <span class="nav-label">Home</span>
+        </a>
+
+        <!-- Dashboard -->
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard.dashboard') }}"
+            class="nav-btn {% if request.endpoint == 'dashboard.dashboard' %}active-mid{% endif %}" title="Dashboard">
+            {{ icon('sidebar_dashboard', size=20, stroke_width=1.8) }}
+            <span class="nav-label">Dashboard</span>
+        </a>
+        {% endif %}
+
+        <!-- Create Poll -->
+        <a href="{{ url_for('polls.create_poll') }}"
+            class="nav-btn {% if request.endpoint == 'polls.create_poll' %}active-mid{% endif %}" title="Create Poll">
+            {{ icon('sidebar_create', size=20, stroke_width=1.8) }}
+            <span class="nav-label">Create</span>
+        </a>
+
+        <!-- AI Create -->
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('polls.create_poll_ai') }}"
+            class="nav-btn {% if request.endpoint == 'polls.create_poll_ai' %}active-mid{% endif %}" title="AI Create">
+            {{ icon('sidebar_ai', size=20, stroke_width=1.8) }}
+            <span class="nav-label">AI Create</span>
+        </a>
+        {% endif %}
+
+        <div class="spacer"></div>
+
+        <!-- Settings -->
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard.settings') }}"
+            class="nav-btn {% if request.endpoint == 'dashboard.settings' %}active-mid{% endif %}" title="Settings">
+            {{ icon('sidebar_settings', size=20, stroke_width=1.8) }}
+            <span class="nav-label">Settings</span>
+        </a>
+
+        <!-- Logout -->
+        <a href="{{ url_for('auth.logout') }}" class="nav-btn nav-btn--danger" title="Logout">
+            {{ icon('sidebar_logout', size=20, stroke_width=1.8) }}
+            <span class="nav-label">Logout</span>
+        </a>
+        {% else %}
+        <!-- Login -->
+        <a href="{{ url_for('auth.login') }}" class="nav-btn" title="Login">
+            {{ icon('sidebar_login', size=20, stroke_width=1.8) }}
+            <span class="nav-label">Login</span>
+        </a>
+        {% endif %}
+    </aside>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open menu">
+            {{ icon('menu', size=22, stroke_width=2) }}
+        </button>
+        <a href="{{ url_for('main.landing') }}" class="mobile-logo">
+            <span>Pollivu</span>
+        </a>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+        <div class="flash-messages" id="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">
+                <span>{{ message }}</span>
+                <button class="flash-close" onclick="this.parentElement.remove()" aria-label="Close">
+                    {{ icon('x', size=16) }}
+                </button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="app-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <div id="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pollivu.js') }}?v=2"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

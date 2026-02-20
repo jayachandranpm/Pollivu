@@ -1,0 +1,638 @@
+{% extends 'base_app.html' if current_user.is_authenticated else 'base_minimal.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Results: {{ poll.question|truncate(50) }} - Pollivu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/poll.css') }}">
+<style>
+    .results-page {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-page">
+    <!-- Poll Header -->
+    <div class="poll-header">
+        <h1 class="poll-question">{{ poll.question }}</h1>
+
+        <div class="poll-status-badges">
+            {% if poll.is_expired %}
+            <span class="status-badge status-expired">
+                {{ icon('clock') }}
+                Expired
+            </span>
+            {% elif poll.is_closed %}
+            <span class="status-badge status-closed">
+                {{ icon('private') }}
+                Closed
+            </span>
+            {% else %}
+            <span class="status-badge status-active">
+                {{ icon('active_polls') }}
+                Active
+            </span>
+            {% endif %}
+        </div>
+
+        <div class="poll-meta">
+            {% if poll.time_remaining and poll.is_active %}
+            <div class="poll-meta-item">
+                {{ icon('clock') }}
+                <span>Expires in {{ poll.time_remaining|format_time }}</span>
+            </div>
+            {% endif %}
+            <div class="poll-meta-item">
+                {{ icon('total_votes') }}
+                <span id="total-votes-count">{{ poll.total_votes }}</span> total votes
+            </div>
+            <div class="poll-meta-item">
+                {{ icon('calendar') }}
+                Created {{ poll.created_at.strftime('%b %d, %Y') }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-content">
+        <!-- Visual Chart -->
+        {% set show_chart = is_creator or (poll.share_results_chart is not none and poll.share_results_chart) or (poll.share_results_chart is none) %}
+        {% if poll.total_votes > 0 and show_chart %}
+        <div class="results-chart">
+            <div class="donut-chart" id="results-donut">
+                <div class="donut-center">
+                    <span class="donut-total">{{ poll.total_votes }}</span>
+                    <span class="donut-label">votes</span>
+                </div>
+            </div>
+            <div class="chart-legend">
+                {% for option in poll.options|sort(attribute='vote_count', reverse=True) %}
+                <div class="legend-item">
+                    <span class="legend-color" data-option="{{ loop.index }}"></span>
+                    <span class="legend-text">{{ option.option_text|truncate(25) }}</span>
+                    <span class="legend-percent">{{ option.percentage }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% set show_list = is_creator or (poll.share_results_list is not none and poll.share_results_list) or (poll.share_results_list is none) %}
+        {% if show_list %}
+        <div class="results-list" id="results-list">
+            {% for option in poll.options|sort(attribute='vote_count', reverse=True) %}
+            <div class="result-item" data-option-id="{{ option.id }}">
+                <div class="result-header">
+                    <span class="result-text">
+                        {{ option.option_text }}
+                        {% if voted_option_id == option.id %}
+                        <span class="your-vote-badge">Your vote</span>
+                        {% endif %}
+                    </span>
+                    <span class="result-stats">
+                        <span class="vote-count">{{ option.vote_count }}</span> votes
+                        (<span class="percentage">{{ option.percentage }}</span>%)
+                    </span>
+                </div>
+                <div class="result-bar-container">
+                    <div class="result-bar" style="width: {{ option.percentage }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Still show option names without stats -->
+        <div class="results-list results-list-minimal">
+            {% for option in poll.options|sort(attribute='display_order') %}
+            <div class="result-item">
+                <div class="result-header">
+                    <span class="result-text">
+                        {{ option.option_text }}
+                        {% if voted_option_id == option.id %}
+                        <span class="your-vote-badge">Your vote</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if has_voted %}
+        <div class="voted-message">
+            {{ icon('info_check') }}
+            <span>Thanks for voting!</span>
+        </div>
+        {% endif %}
+
+        {% if poll.is_active and not has_voted %}
+        <a href="{{ url_for('polls.view_poll', poll_id=poll.id) }}" class="btn btn-primary btn-lg">
+            Cast Your Vote
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Visualizations Section -->
+    {% set show_insights = is_creator or (poll.share_insights is not none and poll.share_insights) or (poll.share_insights is none) %}
+    {% if show_insights %}
+    <div class="visualizations-section" style="margin-top: 40px;">
+        <h3 class="section-title">Insights</h3>
+
+        <div class="charts-grid">
+            <!-- Votes Over Time -->
+            <div class="chart-card">
+                <h4 class="chart-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -3px; margin-right: 6px; opacity: 0.5;">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    Votes Over Time
+                </h4>
+                <div class="chart-canvas-wrap">
+                    <canvas id="votesTimeChart"></canvas>
+                </div>
+                <div class="chart-empty-state" id="timeline-empty" style="display: none;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    <span>Votes will appear here as they come in</span>
+                </div>
+            </div>
+
+            <!-- Word Cloud -->
+            <div class="chart-card">
+                <h4 class="chart-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -3px; margin-right: 6px; opacity: 0.5;">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    Word Cloud
+                </h4>
+                <div class="wordcloud-container" id="wordCloudContainer"></div>
+                <div class="chart-empty-state" id="wordcloud-empty" style="display: none;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>Words from poll options will appear here</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Export & Share only visible when at least chart or list is shared -->
+    {% if show_chart or show_list %}
+    <!-- Export Section -->
+    <div class="export-section" style="margin-top: 40px;">
+        <h3 class="export-title">Export Results</h3>
+        <div class="export-buttons">
+            <a href="{{ url_for('polls.export_csv', poll_id=poll.id) }}" class="btn btn-secondary">
+                {{ icon('download') }}
+                Download CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Share Section -->
+    <div class="share-section">
+        <h3 class="share-title">Share Results</h3>
+        <div class="share-buttons">
+            <button class="share-btn" onclick="copyLinkToClipboard()">
+                {{ icon('copy') }}
+                Copy Link
+            </button>
+            <a href="https://twitter.com/intent/tweet?url={{ request.url|urlencode }}&text={{ ('Poll Results: ' ~ poll.question)|urlencode }}"
+                target="_blank" rel="noopener noreferrer" class="share-btn share-twitter">
+                {{ icon('twitter') }}
+                Twitter
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url|urlencode }}" target="_blank"
+                rel="noopener noreferrer" class="share-btn share-facebook">
+                {{ icon('facebook') }}
+                Facebook
+            </a>
+            <a href="https://wa.me/?text={{ ('Poll Results: ' ~ poll.question ~ ' ' ~ request.url)|urlencode }}" target="_blank"
+                rel="noopener noreferrer" class="share-btn share-whatsapp">
+                {{ icon('whatsapp') }}
+                WhatsApp
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.url|urlencode }}" target="_blank"
+                rel="noopener noreferrer" class="share-btn share-linkedin">
+                {{ icon('linkedin') }}
+                LinkedIn
+            </a>
+            <a href="#" onclick="showQrModal('{{ poll.id }}'); return false;" class="share-btn">
+                {{ icon('qr') }}
+                QR Code
+            </a>
+            <button class="share-btn share-embed" onclick="copyEmbedCode('{{ poll.id }}')">
+                {{ icon('code') }}
+                Embed
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Creator Actions -->
+    {% if is_creator %}
+    <div class="creator-actions">
+        <h3 class="creator-title">Poll Creator Actions</h3>
+        <div class="creator-buttons">
+            {% if poll.is_closed %}
+            <button class="btn btn-secondary" onclick="Pollivu.Poll.reopenPoll('{{ poll.id }}')">
+                {{ icon('reopen') }}
+                Reopen Poll
+            </button>
+            {% elif not poll.is_expired %}
+            <button class="btn btn-secondary" onclick="Pollivu.Poll.closePoll('{{ poll.id }}')">
+                {{ icon('private') }}
+                Close Poll
+            </button>
+            {% endif %}
+            <button class="btn btn-danger" onclick="Pollivu.Poll.confirmDelete('{{ poll.id }}')">
+                {{ icon('delete') }}
+                Delete Poll
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% include 'components/_qr_modal.html' %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="delete-modal">
+    <div class="modal-overlay modal-close"></div>
+    <div class="modal-content">
+        <h3 class="modal-title">Delete Poll?</h3>
+        <p class="modal-text">This action cannot be undone. All votes will be permanently deleted.</p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary modal-close">Cancel</button>
+            <button class="btn btn-danger" onclick="Pollivu.Poll.executeDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Socket.IO Client -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // QR Modal functions are now in components/_qr_modal.html
+
+    const pollId = '{{ poll.id }}';
+    const isPollActive = {{ 'true' if poll.is_active else 'false' }};
+
+    // Initialize Socket.IO
+    const socket = io();
+
+    // Join the poll room
+    socket.on('connect', () => {
+        console.log('Connected to server');
+        socket.emit('join', { poll_id: pollId });
+    });
+
+    // Listen for new votes
+    socket.on('new_vote', (data) => {
+        if (data.poll_id === pollId) {
+            updatePollResults(data);
+            fetchAnalytics(); // Refresh charts on new vote
+        }
+    });
+
+    // Listen for settings changes
+    socket.on('poll_settings_updated', (data) => {
+        if (data.poll_id !== pollId) return;
+
+        // Show notification
+        try {
+            if (data.is_closed === true) {
+                Toast.show('This poll has been closed by the creator.', 'info');
+            } else if (data.is_closed === false && data.message === 'Poll has been reopened') {
+                Toast.show('This poll has been reopened!', 'success');
+            } else {
+                Toast.show(data.message || 'Poll settings updated', 'info');
+            }
+        } catch(e) { console.warn('Toast unavailable:', e); }
+
+        // Reload to reflect all server-rendered changes (share settings, status badges, etc.)
+        setTimeout(() => window.location.reload(), 1500);
+    });
+
+    function updatePollResults(data) {
+        // Update total votes
+        const totalVotesElement = document.getElementById('total-votes-count');
+        const donutTotalElement = document.querySelector('.donut-total');
+        if (totalVotesElement) totalVotesElement.textContent = data.total_votes;
+        if (donutTotalElement) donutTotalElement.textContent = data.total_votes;
+
+        // Update each option
+        data.results.forEach(option => {
+            const optionElement = document.querySelector(`.result-item[data-option-id="${option.id}"]`);
+            if (optionElement) {
+                // Update vote count
+                const voteCountElement = optionElement.querySelector('.vote-count');
+                if (voteCountElement) voteCountElement.textContent = option.vote_count;
+
+                // Update percentage text
+                const percentageElement = optionElement.querySelector('.percentage');
+                if (percentageElement) percentageElement.textContent = option.percentage;
+
+                // Update progress bar width
+                const progressBar = optionElement.querySelector('.result-bar');
+                if (progressBar) progressBar.style.width = `${option.percentage}%`;
+            }
+        });
+
+        // Re-render donut chart if possible
+        updateDonutChart(data.results);
+    }
+
+    function updateDonutChart(results) {
+        const donut = document.getElementById('results-donut');
+        if (!donut) return;
+
+        const chartColors = [
+            '#10B981', '#059669', '#047857', '#065F46', '#064E3B',
+            '#34D399', '#6EE7B7', '#A7F3D0', '#D1FAE5', '#ECFDF5'
+        ];
+
+        // Sort results by vote count desc to match initial render
+        const sortedResults = [...results].sort((a, b) => b.vote_count - a.vote_count);
+
+        let gradient = '';
+        let currentDeg = 0;
+
+        sortedResults.forEach((opt, idx) => {
+            const color = chartColors[idx % chartColors.length];
+            const degrees = (opt.percentage / 100) * 360;
+            if (idx === 0) {
+                gradient = `${color} 0deg`;
+            }
+            gradient += `, ${color} ${currentDeg}deg ${currentDeg + degrees}deg`;
+            currentDeg += degrees;
+        });
+
+        if (gradient) {
+            donut.style.background = `conic-gradient(${gradient})`;
+        }
+    }
+
+    // Start real-time updates if poll is active
+    if (isPollActive) {
+        // Pollivu.Poll.initRealtime(pollId); // removed old logic
+    }
+
+    function copyLinkToClipboard() {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            Toast.show('Link copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            Toast.show('Failed to copy link', 'error');
+        });
+    }
+
+
+    // Generate donut chart
+    (function () {
+        const donut = document.getElementById('results-donut');
+        if (!donut) return;
+
+        const chartColors = [
+            '#10B981', '#059669', '#047857', '#065F46', '#064E3B',
+            '#34D399', '#6EE7B7', '#A7F3D0', '#D1FAE5', '#ECFDF5'
+        ];
+
+        const options = [
+            {% for option in poll.options | sort(attribute = 'vote_count', reverse = True) %}
+            { percentage: {{ option.percentage }} },
+    {% endfor %}
+        ];
+
+    let gradient = '';
+    let currentDeg = 0;
+
+    options.forEach((opt, idx) => {
+        const color = chartColors[idx % chartColors.length];
+        const degrees = (opt.percentage / 100) * 360;
+        if (idx === 0) {
+            gradient = `${color} 0deg`;
+        }
+        gradient += `, ${color} ${currentDeg}deg ${currentDeg + degrees}deg`;
+        currentDeg += degrees;
+    });
+
+    if (gradient) {
+        donut.style.background = `conic-gradient(${gradient})`;
+    }
+    }) ();
+
+    // --- Analytics & Visualizations ---
+    let timeChart = null;
+
+    function fetchAnalytics() {
+        fetch(`/api/poll/${pollId}/analytics`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderTimeChart(data.timeline);
+                    renderWordCloud(data.word_cloud);
+                }
+            })
+            .catch(err => console.error("Analytics error:", err));
+    }
+
+    function renderTimeChart(timeline) {
+        const ctx = document.getElementById('votesTimeChart');
+        if (!ctx) return;
+
+        const emptyState = document.getElementById('timeline-empty');
+
+        if (!timeline || timeline.length === 0) {
+            ctx.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'flex';
+            return;
+        }
+        ctx.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'none';
+
+        // Format labels to be more readable
+        const labels = timeline.map(item => {
+            try {
+                const parts = item.time.split(' ');
+                const datePart = parts[0]; // YYYY-MM-DD
+                const timePart = parts[1] || '00:00'; // HH:00
+                const d = datePart.split('-');
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                return months[parseInt(d[1])-1] + ' ' + parseInt(d[2]) + ', ' + timePart;
+            } catch(e) { return item.time; }
+        });
+        const counts = timeline.map(item => item.count);
+
+        if (timeChart) {
+            timeChart.data.labels = labels;
+            timeChart.data.datasets[0].data = counts;
+            timeChart.update();
+        } else {
+            timeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Votes',
+                        data: counts,
+                        borderColor: '#10B981',
+                        borderWidth: 2.5,
+                        backgroundColor: function(context) {
+                            const chart = context.chart;
+                            const { ctx: c, chartArea } = chart;
+                            if (!chartArea) return 'rgba(16, 185, 129, 0.1)';
+                            const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+                            gradient.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
+                            return gradient;
+                        },
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: '#10B981',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverBorderWidth: 3,
+                        pointHoverBackgroundColor: '#059669'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#064E3B',
+                            titleFont: { family: 'Work Sans', size: 12, weight: '600' },
+                            bodyFont: { family: 'Work Sans', size: 13 },
+                            padding: 12,
+                            cornerRadius: 10,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const v = context.parsed.y;
+                                    return v + ' vote' + (v !== 1 ? 's' : '');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Work Sans', size: 11 },
+                                color: '#9CA3AF',
+                                maxRotation: 45,
+                                maxTicksLimit: 8
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false },
+                            ticks: {
+                                precision: 0,
+                                font: { family: 'Work Sans', size: 11 },
+                                color: '#9CA3AF'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    function renderWordCloud(words) {
+        const container = document.getElementById('wordCloudContainer');
+        if (!container) return;
+
+        const emptyState = document.getElementById('wordcloud-empty');
+
+        if (!words || words.length === 0) {
+            container.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'flex';
+            return;
+        }
+        container.style.display = 'flex';
+        if (emptyState) emptyState.style.display = 'none';
+
+        // Clear previous
+        container.innerHTML = '';
+
+        // Emerald palette for word colors
+        const colors = [
+            '#10B981', '#059669', '#047857', '#065F46', '#064E3B',
+            '#34D399', '#0D9488', '#14B8A6', '#0891B2', '#6EE7B7'
+        ];
+
+        // Use full option texts only — no splitting into individual words
+        const wordList = [...words].sort(() => Math.random() - 0.5);
+
+        const wcMax = Math.max(...wordList.map(w => w.weight), 1);
+        const wcMin = Math.min(...wordList.map(w => w.weight), 0);
+        const wcRange = wcMax - wcMin || 1;
+
+        wordList.forEach((word, idx) => {
+            const span = document.createElement('span');
+            span.className = 'wordcloud-word';
+
+            // Scale font size (16px to 40px)
+            const normalized = (word.weight - wcMin) / wcRange;
+            const fontSize = 16 + normalized * 24;
+            const color = colors[idx % colors.length];
+
+            span.textContent = word.text;
+            span.style.fontSize = fontSize + 'px';
+            span.style.color = color;
+            span.style.opacity = 0.7 + normalized * 0.3;
+            span.style.fontWeight = normalized > 0.5 ? '700' : '500';
+
+            // Tooltip with vote count
+            span.title = word.text + ' — ' + Math.round(word.weight) + ' votes';
+
+            // Hover interaction
+            span.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.15)';
+                this.style.opacity = '1';
+                this.style.zIndex = '2';
+            });
+            span.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.opacity = (0.7 + normalized * 0.3).toString();
+                this.style.zIndex = '1';
+            });
+
+            container.appendChild(span);
+        });
+    }
+
+    // Load analytics on init
+    document.addEventListener('DOMContentLoaded', fetchAnalytics);
+
+    function copyEmbedCode(id) {
+        var embedUrl = window.location.origin + '/poll/' + id + '/embed';
+        var code = '<iframe src="' + embedUrl + '" width="100%" height="480" style="border:none;border-radius:12px;" loading="lazy"></iframe>';
+        navigator.clipboard.writeText(code).then(function() {
+            if (typeof Toast !== 'undefined') Toast.show('Embed code copied!', 'success');
+        }).catch(function() {
+            prompt('Copy this embed code:', code);
+        });
+    }
+
+</script>
+{% endblock %}

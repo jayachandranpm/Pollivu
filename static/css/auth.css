@@ -1,0 +1,484 @@
+/* ============================================================================
+   Pollivu - Authentication Styles (Matching Landing Page Design)
+   ============================================================================ */
+
+/* Import Work Sans font if not already imported */
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap');
+
+/* CSS Variables - needed since auth pages load standalone without main.css */
+:root {
+    /* Colors */
+    --emerald: #10B981;
+    --emerald-dark: #059669;
+    --forest-green: #064E3B;
+    --light-green: #D1FAE5;
+    --lighter-green: #ECFDF5;
+    --body-gray: #6B7280;
+    --light-gray: #F3F4F6;
+    --white: #FFFFFF;
+    --black: #000000;
+
+    /* Typography */
+    --font-heading: 'Work Sans', sans-serif;
+    --font-paragraph: 'Work Sans', sans-serif;
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 300ms ease;
+    --transition-slow: 500ms ease;
+
+    /* Shadows */
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-paragraph);
+    color: var(--forest-green);
+    background-color: var(--white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--lighter-green) 0%, var(--white) 50%, var(--light-green) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-page::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 50vw;
+    height: 50vw;
+    background-color: rgba(16, 185, 129, 0.1);
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+}
+
+.auth-page::after {
+    content: '';
+    position: absolute;
+    bottom: -20%;
+    right: -10%;
+    width: 40vw;
+    height: 40vw;
+    background-color: rgba(5, 150, 105, 0.08);
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    z-index: 10;
+}
+
+.auth-card {
+    background: var(--white);
+    border: 1px solid var(--light-green);
+    padding: 3rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    border-radius: 20px;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.auth-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--forest-green);
+    margin-bottom: 2rem;
+    text-decoration: none;
+    transition: color var(--transition-normal);
+}
+
+.auth-logo:hover {
+    color: var(--emerald);
+}
+
+.auth-logo .logo-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background-color: var(--emerald);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.auth-logo .logo-icon-wrapper svg {
+    color: var(--white);
+}
+
+.auth-title {
+    font-family: var(--font-heading);
+    font-size: 2.25rem;
+    font-weight: 900;
+    color: var(--forest-green);
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+}
+
+.auth-subtitle {
+    font-family: var(--font-paragraph);
+    color: var(--body-gray);
+    margin: 0;
+    font-size: 1rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-paragraph);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--forest-green);
+}
+
+.form-label svg {
+    color: var(--emerald);
+}
+
+.form-label .optional {
+    color: var(--body-gray);
+    font-weight: 400;
+}
+
+.form-input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border: 2px solid var(--light-green);
+    font-family: var(--font-paragraph);
+    font-size: 1rem;
+    transition: all var(--transition-normal);
+    background: var(--white);
+    color: var(--forest-green);
+    border-radius: 12px;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--emerald);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+}
+
+.form-input::placeholder {
+    color: var(--body-gray);
+    opacity: 0.6;
+}
+
+/* Password Input Wrapper for Toggle */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.form-input.has-toggle {
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--body-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    transition: color var(--transition-fast);
+}
+
+.password-toggle:hover {
+    color: var(--emerald);
+}
+
+.form-error {
+    color: #EF4444;
+    font-family: var(--font-paragraph);
+    font-size: 0.875rem;
+}
+
+.password-requirements {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.requirement {
+    font-family: var(--font-paragraph);
+    font-size: 0.75rem;
+    color: var(--body-gray);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--transition-normal);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.requirement::before {
+    content: '•';
+    color: var(--emerald);
+    font-weight: bold;
+}
+
+.requirement.valid {
+    color: var(--forest-green);
+    background-color: var(--lighter-green);
+}
+
+.requirement.valid::before {
+    content: '✓';
+    color: var(--emerald);
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-family: var(--font-paragraph);
+    font-size: 0.875rem;
+    color: var(--forest-green);
+}
+
+.form-checkbox {
+    display: none;
+}
+
+.checkbox-custom {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--light-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    border-radius: 6px;
+}
+
+.form-checkbox:checked+.checkbox-custom {
+    background: var(--emerald);
+    border-color: var(--emerald);
+    border-radius: 6px;
+}
+
+.form-checkbox:checked+.checkbox-custom::after {
+    content: '';
+    width: 12px;
+    height: 12px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all var(--transition-normal);
+    border-radius: 12px;
+}
+
+.btn-primary {
+    background-color: var(--emerald);
+    color: var(--white);
+}
+
+.btn-primary:hover {
+    background-color: var(--emerald-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--forest-green);
+    border: 2px solid var(--light-green);
+}
+
+.btn-secondary:hover {
+    background-color: var(--lighter-green);
+    border-color: var(--emerald);
+}
+
+.btn-lg {
+    padding: 1.125rem 2rem;
+    font-size: 1.125rem;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.btn svg {
+    transition: transform var(--transition-normal);
+}
+
+.btn:hover svg {
+    transform: translateX(4px);
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--light-green);
+}
+
+.auth-footer p {
+    margin: 0;
+    font-family: var(--font-paragraph);
+    color: var(--body-gray);
+    font-size: 0.875rem;
+}
+
+.auth-footer a {
+    color: var(--emerald);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--transition-normal);
+}
+
+.auth-footer a:hover {
+    color: var(--emerald-dark);
+    text-decoration: underline;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--light-green);
+}
+
+.auth-divider span {
+    padding: 0 1rem;
+    font-family: var(--font-paragraph);
+    font-size: 0.875rem;
+    color: var(--body-gray);
+}
+
+/* Flash messages */
+.flash-message {
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    font-family: var(--font-paragraph);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 12px;
+}
+
+.flash-success {
+    background-color: var(--lighter-green);
+    color: var(--forest-green);
+    border: 1px solid var(--emerald);
+}
+
+.flash-error {
+    background-color: #FEF2F2;
+    color: #991B1B;
+    border: 1px solid #EF4444;
+}
+
+.flash-info {
+    background-color: #EFF6FF;
+    color: #1E40AF;
+    border: 1px solid #3B82F6;
+}
+
+.flash-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity var(--transition-fast);
+}
+
+.flash-close:hover {
+    opacity: 1;
+}
+
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 2rem 1.5rem;
+        border-radius: 16px;
+    }
+
+    .auth-title {
+        font-size: 1.75rem;
+    }
+
+    .auth-page {
+        padding: 1rem;
+    }
+}

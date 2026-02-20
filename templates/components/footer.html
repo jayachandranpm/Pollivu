@@ -1,0 +1,33 @@
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <a href="{{ url_for('main.landing') }}" class="footer-logo">
+                    <span class="logo-text">Pollivu</span>
+                </a>
+                <p class="footer-tagline">Anonymous polling made simple. No signup, no tracking, just honest opinions.
+                </p>
+            </div>
+
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="{{ url_for('polls.create_poll') }}">Create Poll</a></li>
+                        <li><a href="{{ url_for('main.how_it_works') }}">How It Works</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="{{ url_for('main.privacy') }}">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p class="copyright">&copy; 2026 Pollivu. All rights reserved.</p>
+        </div>
+    </div>
+</footer>

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy Policy - Pollivu{% endblock %}
+
+{% block content %}
+<div class="static-page privacy-page">
+    <div class="container container-narrow">
+        <div class="page-header">
+            <h1 class="page-title">Privacy Policy</h1>
+            <p class="page-subtitle">Your privacy is our priority. Here's everything you need to know.</p>
+        </div>
+
+        <div class="page-content">
+            <section class="content-section">
+                <h2>Our Privacy Commitment</h2>
+                <p>Pollivu is built with privacy as a core principle. We believe you should be able to create and
+                    participate in polls without worrying about your personal data being collected, tracked, or sold.
+                </p>
+            </section>
+
+            <section class="content-section">
+                <h2>What We DON'T Collect</h2>
+                <div class="highlight-box highlight-red">
+                    <ul>
+                        <li><strong>IP Addresses</strong> - We never log or store your IP address</li>
+                        <li><strong>Email Addresses</strong> - No registration required, no emails stored</li>
+                        <li><strong>Names or Personal Info</strong> - We don't ask for any identifying information</li>
+                        <li><strong>Location Data</strong> - We don't track where you're voting from</li>
+                        <li><strong>Device Fingerprints</strong> - We don't create unique device identifiers</li>
+                        <li><strong>Third-Party Tracking</strong> - No Google Analytics, Facebook Pixel, or any tracking
+                            scripts</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>What We DO Collect</h2>
+                <div class="highlight-box highlight-green">
+                    <ul>
+                        <li><strong>Poll Content</strong> - The questions and options you create</li>
+                        <li><strong>Vote Records</strong> - Which option was selected (anonymously)</li>
+                        <li><strong>Session Cookie</strong> - A temporary cookie to prevent duplicate votes</li>
+                        <li><strong>Timestamps</strong> - When polls were created and when votes were cast</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>How We Prevent Duplicate Votes</h2>
+                <p>To maintain poll integrity, we need a way to prevent someone from voting multiple times. Here's how
+                    we do it while respecting your privacy:</p>
+                <ol>
+                    <li>When you first visit Pollivu, we generate a random session ID stored in a cookie</li>
+                    <li>When you vote, we create a hash combining the poll ID and your session ID</li>
+                    <li>This hash is stored to prevent duplicate votes, but it cannot be reversed to identify you</li>
+                    <li>The hash is different for each poll, so votes cannot be linked across polls</li>
+                </ol>
+            </section>
+
+            <section class="content-section">
+                <h2>Data Retention</h2>
+                <p>We believe in minimizing data storage:</p>
+                <ul>
+                    <li><strong>Expiring Polls</strong> - Polls with an expiration date are automatically deleted after
+                        they expire</li>
+                    <li><strong>Vote Data</strong> - All vote data is deleted along with the poll</li>
+                    <li><strong>Session Cookies</strong> - Browser session cookies are automatically cleared when you
+                        close your browser or after a period of inactivity</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>Cookies We Use</h2>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Cookie Name</th>
+                            <th>Purpose</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>session</code></td>
+                            <td>Prevents duplicate voting and stores creator tokens</td>
+                            <td>Session (or until browser closed)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>Security Measures</h2>
+                <ul>
+                    <li><strong>Rate Limiting</strong> - We limit the number of polls and votes to prevent abuse</li>
+                    <li><strong>CSRF Protection</strong> - All forms are protected against cross-site request forgery
+                    </li>
+                    <li><strong>Input Sanitization</strong> - All user input is sanitized to prevent XSS attacks</li>
+                    <li><strong>Secure Cookies</strong> - Session cookies are HTTP-only and signed</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>Third-Party Services</h2>
+                <p>We use minimal third-party services:</p>
+                <ul>
+                    <li><strong>Google Fonts</strong> - For typography (Inter font family)</li>
+                </ul>
+                <p>We do not use any analytics, advertising, or tracking services.</p>
+            </section>
+
+            <section class="content-section">
+                <h2>Your Rights</h2>
+                <p>Since we don't collect personal data, there's minimal data to manage. However:</p>
+                <ul>
+                    <li>You can delete any poll you created using the creator token stored in your session</li>
+                    <li>You can clear your browser cookies at any time to reset your session</li>
+                    <li>Expired polls are automatically deleted</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>Changes to This Policy</h2>
+                <p>If we make changes to this privacy policy, we will update this page. We encourage you to review it
+                    periodically.</p>
+                <p><strong>Last updated:</strong> {{ now.strftime('%B %d, %Y') }}</p>
+            </section>
+
+            <section class="content-section">
+                <h2>Contact</h2>
+                <p>If you have questions about this privacy policy, please reach out to us.</p>
+            </section>
+        </div>
+
+        <div class="page-actions">
+            <a href="{{ url_for('main.landing') }}" class="btn btn-primary">Back to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

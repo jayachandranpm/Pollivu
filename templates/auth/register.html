@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create an account on Pollivu - Anonymous polling made simple.">
+    <title>Create Account - Pollivu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/toast.css') }}">
+</head>
+
+<body>
+    {% from 'components/icons.html' import icon %}
+
+    <div class="auth-page">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <a href="{{ url_for('main.landing') }}" class="auth-logo">
+                        <span>Pollivu</span>
+                    </a>
+                    <h1 class="auth-title">Create your account</h1>
+                    <p class="auth-subtitle">Start creating polls and accessing AI features</p>
+                </div>
+
+                <!-- Flash Messages for Auth Page -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="auth-messages">
+                    {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <form method="POST" class="auth-form">
+                    {{ form.hidden_tag() }}
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">
+                            {{ icon('mail', size=16) }}
+                            Email
+                        </label>
+                        {{ form.email(class="form-input", placeholder="you@example.com", autocomplete="email") }}
+                        {% if form.email.errors %}
+                        <span class="form-error">{{ form.email.errors[0] }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="display_name" class="form-label">
+                            {{ icon('user', size=16) }}
+                            Display Name <span class="optional">(optional)</span>
+                        </label>
+                        {{ form.display_name(class="form-input", placeholder="How should we call you?") }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            {{ icon('lock', size=16) }}
+                            Password
+                        </label>
+                        <div class="input-wrapper">
+                            {{ form.password(class="form-input has-toggle", placeholder="Create a strong password",
+                            autocomplete="new-password", id="password") }}
+                            <button type="button" class="password-toggle" data-target="password"
+                                aria-label="Toggle password visibility">
+                                {{ icon('privacy_eye', size=20) }}
+                            </button>
+                        </div>
+                        {% if form.password.errors %}
+                        <span class="form-error">{{ form.password.errors[0] }}</span>
+                        {% endif %}
+                        <div class="password-requirements">
+                            <span class="requirement" data-requirement="length">At least 8 characters</span>
+                            <span class="requirement" data-requirement="case">Uppercase & lowercase</span>
+                            <span class="requirement" data-requirement="special">Number & special character</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password" class="form-label">
+                            {{ icon('lock', size=16) }}
+                            Confirm Password
+                        </label>
+                        <div class="input-wrapper">
+                            {{ form.confirm_password(class="form-input has-toggle", placeholder="Confirm your password",
+                            autocomplete="new-password", id="confirm_password") }}
+                            <button type="button" class="password-toggle" data-target="confirm_password"
+                                aria-label="Toggle password visibility">
+                                {{ icon('privacy_eye', size=20) }}
+                            </button>
+                        </div>
+                        {% if form.confirm_password.errors %}
+                        <span class="form-error">{{ form.confirm_password.errors[0] }}</span>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">
+                        {{ icon('user_plus', size=18) }}
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/pollivu.js') }}?v=2"></script>
+    <script src="{{ url_for('static', filename='js/auth_features.js') }}"></script>
+</body>
+
+</html>

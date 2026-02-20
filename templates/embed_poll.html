@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ poll.question }} - Pollivu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        :root {
+            --emerald: #10B981;
+            --emerald-dark: #059669;
+            --forest-green: #064E3B;
+            --light-green: #D1FAE5;
+            --lighter-green: #ECFDF5;
+            --body-gray: #6B7280;
+            --white: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            color: var(--forest-green);
+            background: var(--white);
+            padding: 1.25rem;
+            min-height: 100vh;
+        }
+
+        .embed-card {
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .embed-question {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--forest-green);
+            margin-bottom: 1.25rem;
+            line-height: 1.4;
+        }
+
+        .embed-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+            margin-bottom: 1rem;
+        }
+
+        .embed-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--light-green);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--white);
+        }
+
+        .embed-option:hover {
+            border-color: var(--emerald);
+            background: var(--lighter-green);
+        }
+
+        .embed-option.selected {
+            border-color: var(--emerald);
+            background: var(--lighter-green);
+        }
+
+        .embed-option.voted {
+            border-color: var(--emerald);
+            background: var(--lighter-green);
+        }
+
+        .embed-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--light-green);
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .embed-option.selected .embed-radio,
+        .embed-option.voted .embed-radio {
+            border-color: var(--emerald);
+            background: var(--emerald);
+        }
+
+        .embed-option.selected .embed-radio::after,
+        .embed-option.voted .embed-radio::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--white);
+        }
+
+        .embed-option-text {
+            font-size: 0.9375rem;
+            color: var(--forest-green);
+            flex: 1;
+        }
+
+        .embed-vote-count {
+            font-size: 0.75rem;
+            color: var(--body-gray);
+            font-weight: 500;
+        }
+
+        .embed-bar-bg {
+            height: 4px;
+            background: var(--light-green);
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .embed-bar-fill {
+            height: 100%;
+            background: var(--emerald);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .embed-btn {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--emerald);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            font-family: 'Work Sans', sans-serif;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .embed-btn:hover {
+            background: var(--emerald-dark);
+        }
+
+        .embed-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .embed-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--light-green);
+        }
+
+        .embed-footer a {
+            font-size: 0.75rem;
+            color: var(--emerald);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .embed-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .embed-total {
+            font-size: 0.75rem;
+            color: var(--body-gray);
+        }
+
+        .embed-status {
+            display: inline-block;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            margin-bottom: 0.75rem;
+        }
+
+        .embed-status.closed {
+            background: #FEF2F2;
+            color: #991B1B;
+        }
+
+        .embed-status.expired {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .embed-msg {
+            text-align: center;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .embed-msg.success {
+            background: var(--lighter-green);
+            color: var(--emerald-dark);
+        }
+
+        .embed-msg.info {
+            background: var(--lighter-green);
+            color: var(--forest-green);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="embed-card">
+        {% if poll.is_closed %}
+        <span class="embed-status closed">Poll Closed</span>
+        {% elif poll.is_expired %}
+        <span class="embed-status expired">Poll Expired</span>
+        {% endif %}
+
+        <h2 class="embed-question">{{ poll.question }}</h2>
+
+        {% if has_voted or poll.is_closed or poll.is_expired %}
+        <!-- Show results -->
+        {% if has_voted and not poll.is_closed and not poll.is_expired %}
+        <div class="embed-msg success">✓ Your vote has been recorded</div>
+        {% endif %}
+
+        <div class="embed-options">
+            {% for option in poll.options %}
+            {% set pct = (option.vote_count / poll.total_votes * 100) if poll.total_votes > 0 else 0 %}
+            <div class="embed-option {{ 'voted' if voted_option_id == option.id }}">
+                <div class="embed-radio"></div>
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="embed-option-text">{{ option.text }}</span>
+                        <span class="embed-vote-count">{{ '%.0f' % pct }}%</span>
+                    </div>
+                    <div class="embed-bar-bg">
+                        <div class="embed-bar-fill" style="width: {{ pct }}%"></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- Show voting form -->
+        <div id="embed-vote-form">
+            <div class="embed-options">
+                {% for option in poll.options %}
+                <label class="embed-option" data-option-id="{{ option.id }}">
+                    <div class="embed-radio"></div>
+                    <input type="radio" name="option" value="{{ option.id }}" style="display: none;"
+                        onchange="this.closest('.embed-options').querySelectorAll('.embed-option').forEach(o => o.classList.remove('selected')); this.closest('.embed-option').classList.add('selected'); document.getElementById('embed-submit').disabled = false;">
+                    <span class="embed-option-text">{{ option.text }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            <button type="button" id="embed-submit" class="embed-btn" disabled onclick="submitEmbedVote()">Vote</button>
+        </div>
+
+        <script>
+            function submitEmbedVote() {
+                var selected = document.querySelector('input[name="option"]:checked');
+                if (!selected) return;
+                var btn = document.getElementById('embed-submit');
+                btn.disabled = true;
+                btn.textContent = 'Voting...';
+
+                var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+                fetch('{{ url_for("polls.vote", poll_id=poll.id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ option_id: selected.value }),
+                    credentials: 'same-origin'
+                })
+                .then(function(r) {
+                    if (r.status === 400 && !csrfToken) {
+                        // CSRF failed — likely cross-origin embed, open full poll
+                        throw new Error('csrf');
+                    }
+                    return r.json();
+                })
+                .then(function(data) {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = 'Vote';
+                        alert(data.error || 'Could not submit vote.');
+                    }
+                })
+                .catch(function(err) {
+                    // Fallback: open full poll page for voting
+                    window.open('{{ url_for("polls.view_poll", poll_id=poll.id, _external=True) }}', '_blank');
+                    btn.disabled = false;
+                    btn.textContent = 'Vote';
+                });
+            }
+        </script>
+        {% endif %}
+
+        <div class="embed-footer">
+            <span class="embed-total">{{ poll.total_votes }} vote{{ 's' if poll.total_votes != 1 }}</span>
+            <a href="{{ url_for('polls.view_poll', poll_id=poll.id, _external=True) }}" target="_blank">
+                Open in Pollivu ↗
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

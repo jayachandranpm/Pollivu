@@ -1,0 +1,256 @@
+{% extends 'base_app.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Create Poll with AI - Pollivu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ai.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ai-header">
+
+    <h1>
+        Create Poll with AI
+        <span class="ai-tag">
+            {{ icon('sidebar_ai', size=14) }}
+            AI
+        </span>
+    </h1>
+    <p>Describe your topic and let AI generate a poll for you</p>
+</div>
+
+<div class="ai-form">
+    <div class="section-label">Select AI Provider</div>
+    {% if providers %}
+    <div class="providers">
+        {% for provider in providers %}
+        <label class="provider {% if loop.first %}selected{% endif %}" data-provider="{{ provider.id }}">
+            <input type="radio" name="provider" value="{{ provider.id }}" {% if loop.first %}checked{% endif %}>
+            <div class="provider-icon {{ provider.id }}">
+                {{ icon(provider.id, size=18) }}
+            </div>
+            <span class="provider-name">{{ provider.name }}</span>
+            {% if provider.configured %}
+            <span class="check">✓</span>
+            {% endif %}
+        </label>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-providers">
+        No AI providers configured. <a href="{{ url_for('dashboard.settings') }}">Add your API keys →</a>
+    </div>
+    {% endif %}
+
+    <div class="topic-area">
+        <div class="section-label">Describe Your Poll Topic</div>
+        <textarea id="topic-input" class="topic-input"
+            placeholder="E.g., What programming language should we use for our new project?" maxlength="500"></textarea>
+        <div class="char-count"><span id="topic-chars">0</span>/500</div>
+    </div>
+
+    <div class="options-row">
+        <div>
+            <label>Number of Options</label>
+            <select id="num-options">
+                <option value="3">3 options</option>
+                <option value="4" selected>4 options</option>
+                <option value="5">5 options</option>
+                <option value="6">6 options</option>
+                <option value="7">7 options</option>
+                <option value="8">8 options</option>
+                <option value="9">9 options</option>
+                <option value="10">10 options</option>
+            </select>
+        </div>
+        <div>
+            <label>Poll Style</label>
+            <select id="style">
+                <option value="neutral">Neutral & Balanced</option>
+                <option value="fun">Fun & Casual</option>
+                <option value="professional">Professional</option>
+            </select>
+        </div>
+    </div>
+
+    <button id="generate-btn" class="generate-btn" {% if not providers %}disabled{% endif %}>
+        <span class="btn-text">
+            {{ icon('sidebar_ai', size=18) }}
+            Generate Poll
+        </span>
+        <span class="btn-loading">
+            <span class="spinner"></span>
+            Generating...
+        </span>
+    </button>
+</div>
+
+<!-- Skeleton Loader -->
+<div id="skeleton-loader" class="poll-skeleton-container" style="display: none;">
+    <div class="skeleton skeleton-title"></div>
+    <div class="skeleton skeleton-text short"></div>
+    <div class="skeleton poll-option-skeleton"></div>
+    <div class="skeleton poll-option-skeleton"></div>
+    <div class="skeleton poll-option-skeleton"></div>
+    <div class="skeleton poll-option-skeleton"></div>
+</div>
+
+<div id="preview-section" class="preview" style="display: none;">
+    <div class="preview-header">
+        <span class="preview-badge">✨ AI Generated</span>
+        <button id="regenerate-btn" class="regen-btn">
+            {{ icon('reopen', size=14) }}
+            Regenerate
+        </button>
+    </div>
+
+    <div class="preview-field">
+        <label>Question</label>
+        <textarea id="preview-question" rows="2"></textarea>
+    </div>
+
+    <div class="preview-field">
+        <label>Options</label>
+        <div id="preview-options" class="preview-options"></div>
+        <button id="add-option-btn" class="add-opt-btn">
+            {{ icon('manual_poll', size=14) }}
+            Add Option
+        </button>
+    </div>
+
+    <div class="preview-actions">
+        <button id="create-poll-btn" class="create-btn">
+            {{ icon('info_check', size=18) }}
+            Create This Poll
+        </button>
+        <a href="{{ url_for('polls.create_poll') }}" class="manual-btn">Switch to Manual</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const topicInput = document.getElementById('topic-input');
+    const topicChars = document.getElementById('topic-chars');
+    const generateBtn = document.getElementById('generate-btn');
+    const previewSection = document.getElementById('preview-section');
+    const skeletonLoader = document.getElementById('skeleton-loader');
+    const previewQuestion = document.getElementById('preview-question');
+    const previewOptions = document.getElementById('preview-options');
+
+    topicInput.addEventListener('input', () => {
+        topicChars.textContent = topicInput.value.length;
+    });
+
+    document.querySelectorAll('.provider').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.provider').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+        });
+    });
+
+    generateBtn.addEventListener('click', async () => {
+        const topic = topicInput.value.trim();
+        if (!topic) { showToast('Please enter a topic', 'error'); return; }
+
+        const provider = document.querySelector('input[name="provider"]:checked')?.value;
+        if (!provider) { showToast('Please select a provider', 'error'); return; }
+
+        generateBtn.classList.add('loading');
+        generateBtn.disabled = true;
+
+        // Show skeleton, hide preview
+        previewSection.style.display = 'none';
+        skeletonLoader.style.display = 'block';
+        skeletonLoader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        try {
+            const response = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+                body: JSON.stringify({
+                    topic, provider,
+                    num_options: parseInt(document.getElementById('num-options').value),
+                    style: document.getElementById('style').value
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                displayPreview(data.poll);
+                showToast('Poll generated!', 'success');
+            } else {
+                showToast(data.error || 'Generation failed', 'error');
+            }
+        } catch (error) {
+            showToast('Failed to generate poll', 'error');
+        } finally {
+            generateBtn.classList.remove('loading');
+            generateBtn.disabled = false;
+            // Hide skeleton
+            skeletonLoader.style.display = 'none';
+        }
+    });
+
+    function displayPreview(poll) {
+        previewQuestion.value = poll.question;
+        previewOptions.innerHTML = '';
+        poll.options.forEach((opt, i) => addOptionToPreview(opt, i + 1));
+        previewSection.style.display = 'block';
+        previewSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function addOptionToPreview(text = '', index = null) {
+        const count = previewOptions.children.length + 1;
+        const div = document.createElement('div');
+        div.className = 'preview-option';
+        div.innerHTML = `
+            <span class="opt-num">${index || count}</span>
+            <input type="text" value="${text}" placeholder="Option ${index || count}">
+            <button type="button" class="opt-delete" onclick="this.parentElement.remove()">
+                {{ icon('x', size=14) }}
+            </button>
+        `;
+        previewOptions.appendChild(div);
+    }
+
+    document.getElementById('add-option-btn').addEventListener('click', () => addOptionToPreview());
+    document.getElementById('regenerate-btn').addEventListener('click', () => generateBtn.click());
+
+    document.getElementById('create-poll-btn').addEventListener('click', async () => {
+        const question = previewQuestion.value.trim();
+        const options = Array.from(previewOptions.querySelectorAll('input')).map(i => i.value.trim()).filter(v => v);
+
+        if (!question || options.length < 2) {
+            showToast('Need question and at least 2 options', 'error');
+            return;
+        }
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("polls.create_poll") }}';
+
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden'; csrf.name = 'csrf_token'; csrf.value = getCSRFToken();
+        form.appendChild(csrf);
+
+        const q = document.createElement('input');
+        q.type = 'hidden'; q.name = 'question'; q.value = question;
+        form.appendChild(q);
+
+        options.forEach((opt, i) => {
+            const o = document.createElement('input');
+            o.type = 'hidden'; o.name = `option_${i + 1}`; o.value = opt;
+            form.appendChild(o);
+        });
+
+        const exp = document.createElement('input');
+        exp.type = 'hidden'; exp.name = 'expiration'; exp.value = '7d';
+        form.appendChild(exp);
+
+        document.body.appendChild(form);
+        form.submit();
+    });
+</script>
+{% endblock %}

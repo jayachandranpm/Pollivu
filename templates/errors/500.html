@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Server Error - Pollivu{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="container">
+        <div class="error-content">
+            <div class="error-icon" style="color: var(--danger, #dc2626);">
+                {{ icon('alert_triangle', size=64) }}
+            </div>
+            <h1 class="error-code">500</h1>
+            <h2 class="error-title">Something Went Wrong</h2>
+            <p class="error-message">
+                We encountered an unexpected error. Our team has been notified.
+            </p>
+            <div class="error-hint">
+                <p>Please try again in a few moments. If the problem persists, try refreshing the page.</p>
+            </div>
+            <div class="error-actions">
+                <button onclick="location.reload()" class="btn btn-primary btn-lg">Refresh Page</button>
+                <a href="{{ url_for('main.landing') }}" class="btn btn-secondary btn-lg">Go Home</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

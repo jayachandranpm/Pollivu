@@ -1,0 +1,222 @@
+{% extends 'base_app.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Create Poll - Pollivu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/poll.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="create-poll-page">
+    <form method="POST" action="{{ url_for('polls.create_poll') }}" class="poll-form" id="poll-form">
+        <div class="page-header">
+            <h1 class="page-title">Create a New Poll</h1>
+            <p class="page-subtitle">Ask a question, add options, share with anyone</p>
+        </div>
+        {{ form.hidden_tag() }}
+
+        <!-- Question Section -->
+        <div class="form-section">
+            <label for="question" class="form-label">
+                Your Question
+                <span class="required">*</span>
+            </label>
+            <div class="input-wrapper">
+                {{ form.question(class="form-input form-textarea", id="question", rows="3") }}
+                <div class="char-counter">
+                    <span id="question-count">0</span>/500
+                </div>
+            </div>
+            {% if form.question.errors %}
+            <div class="form-error">{{ form.question.errors[0] }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Options Section -->
+        <div class="form-section">
+            <label class="form-label">
+                Answer Options
+                <span class="required">*</span>
+                <span class="form-hint">(minimum 2, maximum 10)</span>
+            </label>
+
+            <div class="options-container" id="options-container">
+                {% for i in range(1, 11) %}
+                {% set field = form['option_' ~ i] %}
+                <div class="option-row {% if i > 2 %}hidden{% endif %}" id="option-row-{{ i }}" data-index="{{ i }}">
+                    <div class="option-number">{{ i }}</div>
+                    <div class="input-wrapper option-input-wrapper">
+                        {{ field(class="form-input option-input", placeholder="Option " ~ i ~ (" (optional)" if i >
+                        2 else "")) }}
+                        <div class="char-counter option-counter">
+                            <span class="option-count">0</span>/200
+                        </div>
+                    </div>
+                    {% if i > 2 %}
+                    <button type="button" class="btn-remove-option" onclick="removeOption({{ i }})"
+                        title="Remove option">
+                        {{ icon('x', size=16) }}
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="btn btn-add-option" id="add-option-btn" onclick="addOption()">
+                {{ icon('manual_poll') }}
+                Add Option
+            </button>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="form-section">
+            <label class="form-label">Poll Settings</label>
+
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label for="expiration" class="setting-label">
+                        <div class="setting-icon-wrapper">
+                            {{ icon('clock', size=18) }}
+                        </div>
+                        Poll Expires After
+                    </label>
+                    {{ form.expiration(class="form-select", id="expiration") }}
+                </div>
+
+                <div class="setting-item checkbox-item">
+                    <label class="checkbox-label">
+                        {{ form.allow_vote_change(class="form-checkbox") }}
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">
+                            Allow voters to change their vote
+                            <span class="checkbox-hint">Let people update their choice after voting</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="setting-item checkbox-item">
+                    <label class="checkbox-label">
+                        {{ form.show_results_before_voting(class="form-checkbox") }}
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">
+                            Show results before voting
+                            <span class="checkbox-hint">Voters can see current results before they vote</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Section -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg btn-submit" id="submit-btn">
+                <span class="btn-text">Create Poll</span>
+                <span class="btn-loading">
+                    <span class="spinner"></span>
+                    Creating...
+                </span>
+            </button>
+            <p class="form-note">
+                <span style="display: inline-block; vertical-align: middle; margin-right: 4px;">{{ icon('private',
+                    size=16) }}</span>
+                Your poll is anonymous and secure
+            </p>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Track visible options
+    let visibleOptions = 2;
+    const maxOptions = 10;
+
+    // Character counters
+    const questionInput = document.getElementById('question');
+    const questionCount = document.getElementById('question-count');
+
+    questionInput.addEventListener('input', () => {
+        questionCount.textContent = questionInput.value.length;
+        if (questionInput.value.length > 500) {
+            questionCount.parentElement.classList.add('over-limit');
+        } else {
+            questionCount.parentElement.classList.remove('over-limit');
+        }
+    });
+
+    // Option character counters
+    document.querySelectorAll('.option-input').forEach(input => {
+        const counter = input.parentElement.querySelector('.option-count');
+        if (counter) {
+            input.addEventListener('input', () => {
+                counter.textContent = input.value.length;
+                if (input.value.length > 200) {
+                    counter.parentElement.classList.add('over-limit');
+                } else {
+                    counter.parentElement.classList.remove('over-limit');
+                }
+            });
+        }
+    });
+
+    // Add option
+    function addOption() {
+        if (visibleOptions >= maxOptions) return;
+
+        visibleOptions++;
+        const row = document.getElementById(`option-row-${visibleOptions}`);
+        if (row) {
+            row.classList.remove('hidden');
+            row.querySelector('.option-input').focus();
+        }
+
+        if (visibleOptions >= maxOptions) {
+            document.getElementById('add-option-btn').style.display = 'none';
+        }
+    }
+
+    // Remove option
+    function removeOption(index) {
+        const row = document.getElementById(`option-row-${index}`);
+        if (row) {
+            row.classList.add('hidden');
+            row.querySelector('.option-input').value = '';
+        }
+
+        // Reorganize visible options
+        reorderOptions();
+
+        document.getElementById('add-option-btn').style.display = 'flex';
+    }
+
+    // Reorder options to fill gaps
+    function reorderOptions() {
+        const container = document.getElementById('options-container');
+        const visibleRows = Array.from(container.querySelectorAll('.option-row:not(.hidden)'));
+        const hiddenRows = Array.from(container.querySelectorAll('.option-row.hidden'));
+
+        visibleOptions = visibleRows.length;
+
+        // Move hidden rows to end
+        hiddenRows.forEach(row => container.appendChild(row));
+    }
+
+    // Form submission
+    document.getElementById('poll-form').addEventListener('submit', function (e) {
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+    });
+
+    // Initialize visible options count based on non-empty fields
+    document.querySelectorAll('.option-row').forEach(row => {
+        const input = row.querySelector('.option-input');
+        if (input && input.value.trim()) {
+            row.classList.remove('hidden');
+            visibleOptions = Math.max(visibleOptions, parseInt(row.dataset.index));
+        }
+    });
+</script>
+{% endblock %}

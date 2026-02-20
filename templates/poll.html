@@ -1,0 +1,221 @@
+{% extends 'base_app.html' if current_user.is_authenticated else 'base_minimal.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}{{ poll.question|truncate(60) }} - Pollivu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/poll.css') }}">
+<style>
+    .poll-page {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="poll-page">
+    <!-- Poll Header -->
+    <div class="poll-header">
+        <h1 class="poll-question">{{ poll.question }}</h1>
+
+        <div class="poll-meta">
+            {% if poll.time_remaining %}
+            <div class="poll-meta-item">
+                {{ icon('clock') }}
+                <span>Expires in {{ poll.time_remaining|format_time }}</span>
+            </div>
+            {% endif %}
+            <div class="poll-meta-item">
+                {{ icon('total_votes') }}
+                <span id="total-votes">{{ poll.total_votes }}</span> votes
+            </div>
+        </div>
+
+        <div class="privacy-badge">
+            {{ icon('shield') }}
+            Your vote is anonymous
+        </div>
+    </div>
+
+    <!-- Voting Section -->
+    <div class="poll-content">
+
+        <form id="vote-form" class="vote-form" data-allow-change="{{ 'true' if poll.allow_vote_change else 'false' }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="options-list">
+                {% for option in poll.options %}
+                <label
+                    class="option-card {% if has_voted %}voted{% endif %} {% if voted_option_id == option.id %}selected{% endif %}">
+                    <input type="radio" name="option" value="{{ option.id }}" class="option-radio" {% if
+                        voted_option_id==option.id %}checked{% endif %} {% if has_voted and not poll.allow_vote_change
+                        %}disabled{% endif %}>
+                    <span class="option-radio-custom"></span>
+                    <span class="option-text">{{ option.option_text }}</span>
+                    {% if voted_option_id == option.id %}
+                    <span class="voted-badge">
+                        {{ icon('checkmark', size=12, stroke_width=3) }}
+                        Your Vote
+                    </span>
+                    {% elif poll.show_results_before_voting or has_voted %}
+                    <span class="option-votes" data-option-id="{{ option.id }}">{{ option.vote_count }} votes</span>
+                    {% endif %}
+                </label>
+                {% endfor %}
+            </div>
+
+            {% if not has_voted or poll.allow_vote_change %}
+            <button type="submit" class="btn btn-primary btn-lg btn-vote" id="vote-btn">
+                <span class="btn-text">{% if has_voted %}Change Vote{% else %}Vote{% endif %}</span>
+                <span class="btn-loading">
+                    <span class="spinner"></span>
+                    Submitting...
+                </span>
+            </button>
+            {% endif %}
+        </form>
+
+
+        {% if has_voted %}
+        <div class="voted-message">
+            {{ icon('info_check') }}
+            <span>You voted! {% if poll.allow_vote_change %}You can change your vote above.{% endif %}</span>
+        </div>
+
+        <a href="{{ url_for('polls.poll_results', poll_id=poll.id) }}" class="btn btn-secondary btn-lg view-results-link" style="display:block;text-align:center;width:fit-content;margin:0 auto;">
+            View Full Results
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Share Section -->
+    <div class="share-section">
+        <h3 class="share-title">Share this poll</h3>
+        <div class="share-buttons">
+            <button class="share-btn" id="copy-link-btn" onclick="Pollivu.UI.copyToClipboard(window.location.href)">
+                {{ icon('copy') }}
+                Copy Link
+            </button>
+            <a href="https://twitter.com/intent/tweet?url={{ request.url|urlencode }}&text={{ poll.question|urlencode }}"
+                target="_blank" rel="noopener noreferrer" class="share-btn share-twitter">
+                {{ icon('twitter') }}
+                Twitter
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url|urlencode }}" target="_blank"
+                rel="noopener noreferrer" class="share-btn share-facebook">
+                {{ icon('facebook') }}
+                Facebook
+            </a>
+            <a href="https://wa.me/?text={{ (poll.question ~ ' ' ~ request.url)|urlencode }}" target="_blank"
+                rel="noopener noreferrer" class="share-btn share-whatsapp">
+                {{ icon('whatsapp') }}
+                WhatsApp
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.url|urlencode }}" target="_blank"
+                rel="noopener noreferrer" class="share-btn share-linkedin">
+                {{ icon('linkedin') }}
+                LinkedIn
+            </a>
+            <button class="share-btn share-embed" onclick="copyEmbedCode('{{ poll.id }}')">
+                {{ icon('code') }}
+                Embed
+            </button>
+        </div>
+    </div>
+
+    <!-- Creator Actions -->
+    {% if is_creator %}
+    <div class="creator-actions">
+        <h3 class="creator-title">Poll Creator Actions</h3>
+        <div class="creator-buttons">
+            {% if poll.is_closed %}
+            <button class="btn btn-secondary" onclick="Pollivu.Poll.reopenPoll('{{ poll.id }}')">
+                {{ icon('reopen') }}
+                Reopen Poll
+            </button>
+            {% elif not poll.is_expired %}
+            <button class="btn btn-secondary" onclick="Pollivu.Poll.closePoll('{{ poll.id }}')">
+                {{ icon('private') }}
+                Close Poll
+            </button>
+            {% endif %}
+            <button class="btn btn-danger" onclick="Pollivu.Poll.confirmDelete('{{ poll.id }}')">
+                {{ icon('delete') }}
+                Delete Poll
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="delete-modal">
+    <div class="modal-overlay modal-close"></div>
+    <div class="modal-content">
+        <h3 class="modal-title">Delete Poll?</h3>
+        <p class="modal-text">This action cannot be undone. All votes will be permanently deleted.</p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary modal-close">Cancel</button>
+            <button class="btn btn-danger" onclick="Pollivu.Poll.executeDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Socket.IO Client -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
+<script>
+    const pollId = '{{ poll.id }}';
+
+    // Initialize Socket.IO for real-time updates
+    const socket = io();
+    socket.on('connect', () => {
+        socket.emit('join', { poll_id: pollId });
+    });
+
+    // Listen for settings changes
+    socket.on('poll_settings_updated', (data) => {
+        if (data.poll_id !== pollId) return;
+
+        // Show notification
+        try {
+            if (data.is_closed === true) {
+                Toast.show('This poll has been closed by the creator.', 'info');
+            } else if (data.is_closed === false && data.message === 'Poll has been reopened') {
+                Toast.show('This poll has been reopened!', 'success');
+            } else {
+                Toast.show(data.message || 'Poll settings updated', 'info');
+            }
+        } catch(e) { console.warn('Toast unavailable:', e); }
+
+        // Reload to reflect all server-rendered changes
+        setTimeout(() => window.location.reload(), 1500);
+    });
+
+    // Listen for new votes to update count
+    socket.on('new_vote', (data) => {
+        if (data.poll_id === pollId) {
+            const totalEl = document.getElementById('total-votes');
+            if (totalEl) totalEl.textContent = data.total_votes;
+        }
+    });
+
+    // Initialize poll voting
+    if (document.getElementById('vote-form')) {
+        Pollivu.Poll.initVoting(pollId);
+    }
+
+    function copyEmbedCode(id) {
+        var embedUrl = window.location.origin + '/poll/' + id + '/embed';
+        var code = '<iframe src="' + embedUrl + '" width="100%" height="480" style="border:none;border-radius:12px;" loading="lazy"></iframe>';
+        navigator.clipboard.writeText(code).then(function() {
+            if (typeof Toast !== 'undefined') Toast.show('Embed code copied!', 'success');
+        }).catch(function() {
+            prompt('Copy this embed code:', code);
+        });
+    }
+</script>
+{% endblock %}

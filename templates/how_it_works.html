@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}How It Works - Pollivu{% endblock %}
+
+{% block content %}
+<div class="static-page how-it-works-page">
+    <div class="container container-narrow">
+        <div class="page-header">
+            <h1 class="page-title">How It Works</h1>
+            <p class="page-subtitle">Create and share polls in three simple steps</p>
+        </div>
+
+        <div class="page-content">
+            <!-- Step by Step Guide -->
+            <section class="content-section tutorial-section">
+                <div class="tutorial-step">
+                    <div class="step-badge">Step 1</div>
+                    <h2>Create Your Poll</h2>
+                    <p>Start by crafting your question. Make it clear and easy to understand.</p>
+                    <ul>
+                        <li>Enter your question (10-500 characters)</li>
+                        <li>Add 2-10 answer options</li>
+                        <li>Choose when the poll expires</li>
+                        <li>Optionally allow vote changes</li>
+                    </ul>
+                    <div class="tip-box">
+                        <strong>💡 Tip:</strong> Keep your question neutral to get unbiased responses.
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="step-badge">Step 2</div>
+                    <h2>Share the Link</h2>
+                    <p>Once your poll is created, you'll get a unique link. Share it anywhere!</p>
+                    <ul>
+                        <li>Copy the link with one click</li>
+                        <li>Share on social media (Twitter, Facebook, WhatsApp)</li>
+                        <li>Send via email or messaging apps</li>
+                        <li>Download a QR code for offline sharing</li>
+                    </ul>
+                    <div class="tip-box">
+                        <strong>💡 Tip:</strong> The poll link works on any device - desktop, tablet, or mobile.
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="step-badge">Step 3</div>
+                    <h2>View Results</h2>
+                    <p>Watch votes come in real-time and analyze the results.</p>
+                    <ul>
+                        <li>Results update automatically every few seconds</li>
+                        <li>See vote counts and percentages</li>
+                        <li>Export results to CSV for further analysis</li>
+                        <li>Close the poll when you're ready</li>
+                    </ul>
+                    <div class="tip-box">
+                        <strong>💡 Tip:</strong> You can choose to show or hide results before voting.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Best Practices -->
+            <section class="content-section">
+                <h2>Best Practices</h2>
+
+                <h3>Writing Good Questions</h3>
+                <ul>
+                    <li><strong>Be specific:</strong> "What time should we meet on Friday?" is better than "When should
+                        we meet?"</li>
+                    <li><strong>Stay neutral:</strong> Avoid leading questions that suggest a preferred answer</li>
+                    <li><strong>Keep it simple:</strong> One question per poll works best</li>
+                </ul>
+
+                <h3>Creating Effective Options</h3>
+                <ul>
+                    <li><strong>Cover all choices:</strong> Make sure all reasonable options are included</li>
+                    <li><strong>Be mutually exclusive:</strong> Options shouldn't overlap</li>
+                    <li><strong>Use parallel structure:</strong> Keep options similar in format</li>
+                    <li><strong>Consider "Other":</strong> For open-ended questions, consider adding an "Other" option
+                    </li>
+                </ul>
+
+                <h3>Maximizing Response Rates</h3>
+                <ul>
+                    <li><strong>Share at the right time:</strong> Consider when your audience is most active</li>
+                    <li><strong>Provide context:</strong> Tell people why their vote matters</li>
+                    <li><strong>Set appropriate deadlines:</strong> Give people enough time to respond</li>
+                    <li><strong>Send reminders:</strong> A gentle reminder can boost participation</li>
+                </ul>
+            </section>
+
+            <!-- FAQ -->
+            <section class="content-section faq-section">
+                <h2>Frequently Asked Questions</h2>
+
+                <div class="faq-item">
+                    <h3>Can I edit my poll after creating it?</h3>
+                    <p>For integrity reasons, polls cannot be edited after votes have been cast. We recommend previewing
+                        your poll carefully before sharing.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h3>How do I delete my poll?</h3>
+                    <p>If you created the poll on this device/browser, you'll see a "Delete Poll" button. This uses a
+                        creator token stored in your browser session.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h3>Can someone vote multiple times?</h3>
+                    <p>We use browser sessions to prevent duplicate votes. However, someone using a different browser or
+                        device could vote again. For high-stakes polls, consider other verification methods.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h3>Are votes really anonymous?</h3>
+                    <p>Yes! We don't collect IP addresses, email addresses, or any identifying information. We only
+                        store a hashed token to prevent duplicate votes.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h3>What happens when a poll expires?</h3>
+                    <p>Expired polls stop accepting new votes but remain viewable. They are automatically deleted from
+                        our servers after a short period.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h3>Is there a limit to how many polls I can create?</h3>
+                    <p>To prevent abuse, we limit poll creation to 10 polls per hour per session. This should be plenty
+                        for normal use.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h3>Can I see who voted for what?</h3>
+                    <p>No. Polls are completely anonymous. Even as the poll creator, you can only see aggregate vote
+                        counts, not individual votes.</p>
+                </div>
+            </section>
+        </div>
+
+        <div class="page-actions">
+            <a href="{{ url_for('polls.create_poll') }}" class="btn btn-primary btn-lg">Create Your First Poll</a>
+            <a href="{{ url_for('main.landing') }}" class="btn btn-secondary btn-lg">Back to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,267 @@
+{% extends 'base_app.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Dashboard - Pollivu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="welcome-section">
+            <h1 class="dashboard-title">
+                Welcome{% if current_user.display_name %}, {{ current_user.display_name }}{% endif %}!
+            </h1>
+            <p class="dashboard-subtitle">Manage your polls and AI settings</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('polls.create_poll') }}" class="btn btn-secondary">
+                {{ icon('manual_poll', size=18) }}
+                Manual Poll
+            </a>
+            <a href="{{ url_for('polls.create_poll_ai') }}" class="btn btn-primary">
+                {{ icon('sidebar_ai', size=18) }}
+                Create with AI
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                {{ icon('total_polls') }}
+            </div>
+            <div class="stat-content">
+                <span class="stat-number">{{ current_user.poll_count }}</span>
+                <span class="stat-label">Total Polls</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                {{ icon('total_votes') }}
+            </div>
+            <div class="stat-content">
+                <span class="stat-number">{{ current_user.total_votes_received }}</span>
+                <span class="stat-label">Total Votes</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                {{ icon('active_polls') }}
+            </div>
+            <div class="stat-content">
+                <span class="stat-number">{{ polls|selectattr('is_active')|list|length }}</span>
+                <span class="stat-label">Active Polls</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{{ url_for('dashboard.settings') }}" class="action-card">
+            <div class="action-icon">
+                {{ icon('settings') }}
+            </div>
+            <span>API Settings</span>
+        </a>
+    </div>
+
+    <!-- Polls Section -->
+    <div class="polls-section">
+        <div class="section-header">
+            <h2>Your Polls</h2>
+            <div class="section-actions">
+                <select id="poll-filter" class="filter-select">
+                    <option value="all">All Polls</option>
+                    <option value="active">Active</option>
+                    <option value="closed">Closed</option>
+                </select>
+            </div>
+        </div>
+
+        {% if polls %}
+        <div class="polls-grid">
+            {% for poll in polls %}
+            <div class="poll-card" data-status="{{ 'active' if poll.is_active else 'closed' }}">
+                <div class="poll-card-header">
+                    <div class="poll-status">
+                        {% if poll.is_active %}
+                        <span class="status-badge status-active">
+                            <span class="status-dot"></span>
+                            Active
+                        </span>
+                        {% elif poll.is_expired %}
+                        <span class="status-badge status-expired">Expired</span>
+                        {% else %}
+                        <span class="status-badge status-closed">Closed</span>
+                        {% endif %}
+
+                        {% if poll.is_public %}
+                        <span class="visibility-badge public">
+                            {{ icon('public', size=12) }}
+                            Public
+                        </span>
+                        {% else %}
+                        <span class="visibility-badge private">
+                            {{ icon('private', size=12) }}
+                            Private
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="poll-actions-dropdown">
+                        <button class="dropdown-toggle" onclick="toggleDropdown(this)">
+                            {{ icon('more_vertical', size=18) }}
+                        </button>
+                        <div class="dropdown-menu">
+
+                            <a href="{{ url_for('polls.edit_poll', poll_id=poll.id) }}" class="dropdown-item">
+                                {{ icon('edit', size=16) }}
+                                Edit
+                            </a>
+                            <a href="{{ url_for('polls.view_poll', poll_id=poll.id) }}" class="dropdown-item">
+                                {{ icon('view', size=16) }}
+                                View
+                            </a>
+                            <a href="{{ url_for('polls.poll_results', poll_id=poll.id) }}" class="dropdown-item">
+                                {{ icon('results', size=16) }}
+                                Results
+                            </a>
+                            <button class="dropdown-item" onclick="Pollivu.Poll.togglePublic('{{ poll.id }}')">
+                                {% if poll.is_public %}
+                                {{ icon('private', size=16) }}
+                                Make Private
+                                {% else %}
+                                {{ icon('public', size=16) }}
+                                Make Public
+                                {% endif %}
+                            </button>
+                            <hr class="dropdown-divider">
+                            <button class="dropdown-item danger" onclick="Pollivu.Poll.confirmDelete('{{ poll.id }}')">
+                                {{ icon('delete', size=16) }}
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="poll-card-title">{{ poll.question|truncate(80) }}</h3>
+
+                <div class="poll-card-meta">
+                    <span class="meta-item">
+                        {{ icon('total_votes', size=14) }}
+                        {{ poll.total_votes }} votes
+                    </span>
+                    <span class="meta-item">
+                        {{ icon('calendar', size=14) }}
+                        {{ poll.created_at.strftime('%b %d, %Y') }}
+                    </span>
+                </div>
+
+                <div class="poll-card-footer">
+                    <button class="btn btn-sm btn-secondary copy-link"
+                        onclick="Pollivu.UI.copyToClipboard('{{ request.host_url.rstrip('/') }}{{ url_for('polls.view_poll', poll_id=poll.id) }}')">
+                        {{ icon('copy', size=14) }}
+                        Copy Link
+                    </button>
+                    <a href="#" onclick="showQrModal('{{ poll.id }}'); return false;" class="btn btn-sm btn-secondary">
+                        {{ icon('qr', size=14) }}
+                        QR
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Empty state for filtered results -->
+        <div class="filter-empty-state" id="filter-empty" style="display: none;">
+            <p>No polls match this filter.</p>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-illustration">
+                <div class="empty-icon-wrapper">
+                    {{ icon('total_polls', size=48) }}
+                </div>
+                <div class="illustration-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+            <h3 class="empty-title">Create Your First Poll</h3>
+            <p class="empty-description">Gather opinions, make decisions, and engage your audience. Let AI help you
+                create the perfect poll in seconds!</p>
+            <div class="empty-actions">
+                <a href="{{ url_for('polls.create_poll_ai') }}" class="btn btn-primary btn-lg">
+                    {{ icon('sidebar_ai', size=18) }}
+                    Create with AI
+                </a>
+                <a href="{{ url_for('polls.create_poll') }}" class="btn btn-secondary btn-lg">
+                    {{ icon('manual_poll', size=18) }}
+                    Create Manually
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% include 'components/_qr_modal.html' %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="delete-modal">
+    <div class="modal-overlay modal-close"></div>
+    <div class="modal-content">
+        <h3 class="modal-title">Delete Poll?</h3>
+        <p class="modal-text">This action cannot be undone. All votes will be permanently deleted.</p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary modal-close">Cancel</button>
+            <button class="btn btn-danger" onclick="Pollivu.Poll.executeDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- poll.js removed, using unified pollivu.js -->
+<script>
+    function toggleDropdown(btn) {
+        const dropdown = btn.parentElement;
+        dropdown.classList.toggle('active');
+
+        // Close when clicking outside
+        document.addEventListener('click', function closeDropdown(e) {
+            if (!dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+                document.removeEventListener('click', closeDropdown);
+            }
+        });
+    }
+
+    // Filter polls
+    document.getElementById('poll-filter').addEventListener('change', function () {
+        const filter = this.value;
+        const cards = document.querySelectorAll('.poll-card');
+        const emptyState = document.getElementById('filter-empty');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            if (filter === 'all') {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                const matches = card.dataset.status === filter;
+                card.style.display = matches ? '' : 'none';
+                if (matches) visibleCount++;
+            }
+        });
+
+        // Show empty state if no cards visible
+        if (emptyState) {
+            emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+    });
+</script>
+{% endblock %}

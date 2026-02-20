@@ -1,0 +1,368 @@
+{% extends 'base_app.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Edit Poll - {{ poll.question|truncate(30) }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/poll.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="create-poll-page">
+    <form method="POST" class="poll-form" id="poll-form">
+        <div class="page-header">
+            <h1 class="page-title">Edit Poll Settings</h1>
+            <p class="page-subtitle">Update question, options and settings for this poll</p>
+        </div>
+        {{ form.hidden_tag() }}
+
+        <!-- Question Section -->
+        <div class="form-section">
+            <label for="question" class="form-label">
+                Your Question
+                <span class="required">*</span>
+            </label>
+            <div class="input-wrapper">
+                {{ form.question(class="form-input form-textarea", id="question", rows="3") }}
+            </div>
+            {% if form.question.errors %}
+            <div class="form-error">{{ form.question.errors[0] }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Settings Section -->
+        <div class="form-section">
+            <label class="form-label">Poll Settings</label>
+
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label for="expiration" class="setting-label">
+                        <div class="setting-icon-wrapper">
+                            {{ icon('clock', size=18) }}
+                        </div>
+                        Poll Expires After
+                    </label>
+                    {{ form.expiration(class="form-select", id="expiration") }}
+                    <small class="form-hint">
+                        Current: {% if poll.expires_at %}{{ poll.expires_at.strftime('%Y-%m-%d %H:%M') }}{% else %}No
+                        expiration{% endif %}
+                    </small>
+                </div>
+
+                <div class="setting-item checkbox-item">
+                    <label class="checkbox-label">
+                        {{ form.allow_vote_change(class="form-checkbox") }}
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">
+                            Allow voters to change their vote
+                        </span>
+                    </label>
+                </div>
+
+                <div class="setting-item checkbox-item">
+                    <label class="checkbox-label">
+                        {{ form.show_results_before_voting(class="form-checkbox") }}
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">
+                            Show results before voting
+                        </span>
+                    </label>
+                </div>
+
+                <div class="setting-item checkbox-item">
+                    <label class="checkbox-label">
+                        {{ form.is_public(class="form-checkbox") }}
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">
+                            Make poll publicly accessible
+                        </span>
+                    </label>
+                </div>
+
+                <div class="setting-item checkbox-item">
+                    <label class="checkbox-label">
+                        {{ form.share_results_chart(class="form-checkbox") }}
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">
+                            Share results chart publicly
+                            <small class="setting-hint">Show the donut chart to all visitors</small>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="setting-item checkbox-item">
+                    <label class="checkbox-label">
+                        {{ form.share_results_list(class="form-checkbox") }}
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">
+                            Share results list publicly
+                            <small class="setting-hint">Show the vote counts &amp; bars to all visitors</small>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="setting-item checkbox-item">
+                    <label class="checkbox-label">
+                        {{ form.share_insights(class="form-checkbox") }}
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">
+                            Share insights publicly
+                            <small class="setting-hint">Show timeline &amp; word cloud to all visitors</small>
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Options Section -->
+        <div class="form-section">
+            <label class="form-label">
+                Manage Options
+                <span class="form-hint">(minimum 2, maximum 10)</span>
+            </label>
+
+            <div class="options-container" id="options-list">
+                {% for option in poll.options %}
+                <div class="option-row option-item" data-id="{{ option.id }}">
+                    <div class="option-number">{{ loop.index }}</div>
+                    <div class="input-wrapper option-input-wrapper">
+                        <span class="option-text">{{ option.option_text }}</span>
+                    </div>
+                    {% if option.vote_count > 0 %}
+                    <span class="option-votes">{{ option.vote_count }} votes</span>
+                    {% endif %}
+                    <button type="button" class="btn-remove-option" onclick="deleteOption('{{ option.id }}')"
+                        title="Remove option">
+                        {{ icon('x', size=16) }}
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="add-option-row">
+                <input type="text" id="new-option-text" class="form-input" placeholder="New option text...">
+                <button type="button" class="btn btn-secondary btn-add-option" onclick="addOption()">
+                    {{ icon('plus', size=18) }}
+                    Add
+                </button>
+            </div>
+
+            <button type="button" class="btn btn-secondary btn-add-option" id="ai-suggest-btn"
+                onclick="suggestOptions()" style="width: 100%; margin-top: 16px;">
+                {{ icon('sidebar_ai', size=18) }}
+                AI Suggest Options
+            </button>
+            <div id="ai-suggestions" class="ai-suggestions" style="display: none;"></div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-lg btn-cancel">
+                {{ icon('x', size=18) }}
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg btn-submit">
+                {{ icon('checkmark', size=18) }}
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const pollId = '{{ poll.id }}';
+    const csrfToken = '{{ csrf_token() }}';
+
+    function addOptionElement(option) {
+        const list = document.getElementById('options-list');
+
+        const div = document.createElement('div');
+        div.className = 'option-item';
+        div.setAttribute('data-id', option.id);
+        div.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--bg-secondary); border-radius: 8px;';
+
+        div.innerHTML = `
+            <span style="flex: 1; font-weight: 500;">${option.option_text}</span>
+            <button type="button" class="btn btn-sm btn-icon" onclick="deleteOption('${option.id}')" style="color: var(--danger); padding: 4px;">
+                {{ icon('delete', size=18) }}
+            </button>
+        `;
+        list.appendChild(div);
+    }
+
+    function addOption() {
+        const input = document.getElementById('new-option-text');
+        const text = input.value.trim();
+
+        if (!text) return;
+
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Adding...';
+
+        fetch(`/poll/${pollId}/option/add`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ option_text: text })
+        })
+            .then(r => r.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+
+                if (data.success) {
+                    addOptionElement(data.option);
+                    input.value = '';
+                    showToast('Option added', 'success');
+                } else {
+                    showToast(data.error, 'error');
+                }
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                showToast('Failed to add option', 'error');
+            });
+    }
+
+    function deleteOption(optionId) {
+        if (!confirm('Delete this option? Votes for it will be removed.')) return;
+
+        // Find element to remove
+        const item = document.querySelector(`.option-item[data-id="${optionId}"]`);
+        if (item) item.style.opacity = '0.5';
+
+        fetch(`/poll/${pollId}/option/${optionId}/delete`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    if (item) item.remove();
+                    showToast('Option deleted', 'success');
+                } else {
+                    if (item) item.style.opacity = '1';
+                    showToast(data.error, 'error');
+                }
+            })
+            .catch(() => {
+                if (item) item.style.opacity = '1';
+                showToast('Failed to delete option', 'error');
+            });
+    }
+
+    function suggestOptions() {
+        const btn = document.getElementById('ai-suggest-btn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Generating Suggestions...';
+
+        fetch(`/poll/${pollId}/options/suggest`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+            .then(r => r.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+
+                if (data.success && data.suggestions.length > 0) {
+                    const container = document.getElementById('ai-suggestions');
+                    container.style.display = 'block';
+
+                    // Build HTML with text stored directly on each button
+                    let html = '<p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">Click to add:</p>';
+                    html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+                    data.suggestions.forEach((text) => {
+                        // Escape text for HTML attribute (use encodeURIComponent for safety)
+                        const safeText = encodeURIComponent(text);
+                        html += `<button type="button" class="btn btn-sm btn-secondary ai-suggestion-btn" data-text="${safeText}">+ ${text}</button>`;
+                    });
+                    html += '</div>';
+                    container.innerHTML = html;
+
+                    // Attach click handlers - get text directly from button's data-text
+                    container.querySelectorAll('.ai-suggestion-btn').forEach(btn => {
+                        btn.addEventListener('click', function () {
+                            const text = decodeURIComponent(this.dataset.text);
+                            addSuggestedOption(this, text);
+                        });
+                    });
+                } else {
+                    showToast(data.error || 'No suggestions found', 'error');
+                }
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                showToast('AI Request Failed', 'error');
+            });
+    }
+
+    function addSuggestedOption(btn, text) {
+        // Disable button immediately to prevent double-clicks, but don't remove yet
+        btn.disabled = true;
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = 'Adding...';
+
+        // Check if we already have this option in the list
+        const existingOptions = Array.from(document.querySelectorAll('#options-list .option-item span'))
+            .map(span => span.textContent.toLowerCase().trim());
+
+        if (existingOptions.includes(text.toLowerCase().trim())) {
+            showToast('Option already exists', 'error');
+            btn.remove();  // Remove on duplicate check fail
+            updateSuggestionsVisibility();
+            return;
+        }
+
+        fetch(`/poll/${pollId}/option/add`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ option_text: text })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    addOptionElement(data.option);
+                    showToast('Option added', 'success');
+                    btn.remove();  // Only remove on success
+                    updateSuggestionsVisibility();
+                } else {
+                    // On error, restore the button so user doesn't lose it
+                    showToast(data.error || 'Failed to add option', 'error');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            })
+            .catch(() => {
+                // On error, restore the button
+                showToast('Failed to add option', 'error');
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            });
+    }
+
+    function updateSuggestionsVisibility() {
+        const container = document.getElementById('ai-suggestions');
+        const buttons = container.querySelectorAll('button.ai-suggestion-btn');
+        if (buttons.length === 0) {
+            container.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

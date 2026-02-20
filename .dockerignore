@@ -1,0 +1,23 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.example
+.git/
+.gitignore
+instance/
+*.db
+*.sqlite3
+.DS_Store
+*.md
+tests/
+landing page/
+verify_*.py
+.pytest_cache/
+.vscode/
+*.drawio
+*.svg
+logo.png
+Pollivu_Wireframes.svg

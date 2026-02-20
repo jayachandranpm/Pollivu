@@ -1,0 +1,339 @@
+{% extends 'base_app.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Settings - Pollivu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="settings-header">
+
+    <h1>Settings</h1>
+    <p>Manage your AI provider API keys</p>
+</div>
+
+<!-- Account Settings Section -->
+<div class="settings-section">
+    <h2>Profile & Security</h2>
+    <form method="POST" id="account-form" class="settings-form">
+        {{ account_form.hidden_tag() }}
+
+        <div class="form-group-row">
+            <div class="form-group">
+                {{ account_form.display_name.label(class="form-label") }}
+                {{ account_form.display_name(class="form-input", placeholder="Your Name") }}
+                {% if account_form.display_name.errors %}
+                <span class="form-error">{{ account_form.display_name.errors[0] }}</span>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ account_form.email.label(class="form-label") }}
+                {{ account_form.email(class="form-input", placeholder="email@example.com") }}
+                {% if account_form.email.errors %}
+                <span class="form-error">{{ account_form.email.errors[0] }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-divider">
+            <span>Change Password (Optional)</span>
+        </div>
+
+        <div class="form-group-row">
+            <div class="form-group">
+                {{ account_form.new_password.label(class="form-label") }}
+                {{ account_form.new_password(class="form-input", placeholder="New Password",
+                autocomplete="new-password") }}
+                {% if account_form.new_password.errors %}
+                <span class="form-error">{{ account_form.new_password.errors[0] }}</span>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ account_form.confirm_password.label(class="form-label") }}
+                {{ account_form.confirm_password(class="form-input", placeholder="Confirm New Password",
+                autocomplete="new-password") }}
+                {% if account_form.confirm_password.errors %}
+                <span class="form-error">{{ account_form.confirm_password.errors[0] }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-group password-confirm-section">
+            {{ account_form.current_password.label(class="form-label") }}
+            {{ account_form.current_password(class="form-input", placeholder="Required to save any changes") }}
+            {% if account_form.current_password.errors %}
+            <span class="form-error">{{ account_form.current_password.errors[0] }}</span>
+            {% endif %}
+            <p class="help-text">Please enter your current password to confirm these changes.</p>
+        </div>
+
+        <button type="submit" name="submit_account" class="save-btn btn-primary">
+            Update Profile
+        </button>
+    </form>
+</div>
+
+<!-- API Settings Section -->
+<div class="settings-section settings-section-spaced">
+    <h2>AI Provider Settings</h2>
+    <p class="section-desc">Manage your API keys to enable AI-powered poll generation.</p>
+
+    <form method="POST" id="api-form">
+        {{ api_form.hidden_tag() }}
+
+        <div class="api-cards">
+            <!-- Gemini -->
+            <div class="api-card">
+                <div class="api-card-header">
+                    <div class="api-icon gemini">
+                        {{ icon('gemini', size=20) }}
+                    </div>
+                    <div class="api-info">
+                        <h3>Google Gemini</h3>
+                        <p>Gemini 2.5 Flash, 2.5 Pro, 3 Flash</p>
+                    </div>
+                    {% if keys.get('gemini') %}
+                    <span class="api-status">Configured</span>
+                    {% endif %}
+                </div>
+                <div class="api-form">
+                    {% if masked_keys.get('gemini') %}
+                    <div class="key-row">
+                        <span>{{ masked_keys.gemini }}</span>
+                        <button type="submit" form="delete-gemini-form" class="btn-delete" title="Remove">
+                            {{ icon('x', size=14) }}
+                        </button>
+                    </div>
+                    {% endif %}
+                    {{ api_form.gemini_key(class="input-row api-input", placeholder="Enter Gemini API key",
+                    style="flex:1;") }}
+                    <div class="model-select-row">
+                        <label class="model-label">Model</label>
+                        <select name="gemini_model" id="gemini-model" class="model-select">
+                            {% set gm = keys.get('gemini_model', 'gemini-2.5-flash') %}
+                            <option value="gemini-2.5-flash" {{ 'selected' if gm == 'gemini-2.5-flash' }}>Gemini 2.5 Flash</option>
+                            <option value="gemini-2.5-pro" {{ 'selected' if gm == 'gemini-2.5-pro' }}>Gemini 2.5 Pro</option>
+                            <option value="gemini-3-flash" {{ 'selected' if gm == 'gemini-3-flash' }}>Gemini 3 Flash</option>
+                            <option value="gemini-3-pro" {{ 'selected' if gm == 'gemini-3-pro' }}>Gemini 3 Pro</option>
+                            <option value="gemini-2.5-flash-lite" {{ 'selected' if gm == 'gemini-2.5-flash-lite' }}>Gemini 2.5 Flash-Lite</option>
+                        </select>
+                    </div>
+                    <a href="https://makersuite.google.com/app/apikey" target="_blank" class="help-link">Get API key
+                        →</a>
+                </div>
+            </div>
+
+            <!-- OpenAI -->
+            <div class="api-card">
+                <div class="api-card-header">
+                    <div class="api-icon openai">
+                        {{ icon('openai', size=20) }}
+                    </div>
+                    <div class="api-info">
+                        <h3>OpenAI</h3>
+                        <p>GPT-5.2, GPT-4.1, GPT-4o</p>
+                    </div>
+                    {% if keys.get('openai') %}
+                    <span class="api-status">Configured</span>
+                    {% endif %}
+                </div>
+                <div class="api-form">
+                    {% if masked_keys.get('openai') %}
+                    <div class="key-row">
+                        <span>{{ masked_keys.openai }}</span>
+                        <button type="submit" form="delete-openai-form" class="btn-delete" title="Remove">
+                            {{ icon('x', size=14) }}
+                        </button>
+                    </div>
+                    {% endif %}
+                    {{ api_form.openai_key(class="api-input", placeholder="sk-...") }}
+                    <div class="model-select-row">
+                        <label class="model-label">Model</label>
+                        <select name="openai_model" id="openai-model" class="model-select">
+                            {% set om = keys.get('openai_model', 'gpt-4.1') %}
+                            <option value="gpt-5.2" {{ 'selected' if om == 'gpt-5.2' }}>GPT-5.2</option>
+                            <option value="gpt-5-mini" {{ 'selected' if om == 'gpt-5-mini' }}>GPT-5 Mini</option>
+                            <option value="gpt-5-nano" {{ 'selected' if om == 'gpt-5-nano' }}>GPT-5 Nano</option>
+                            <option value="gpt-4.1" {{ 'selected' if om == 'gpt-4.1' }}>GPT-4.1</option>
+                            <option value="gpt-4.1-mini" {{ 'selected' if om == 'gpt-4.1-mini' }}>GPT-4.1 Mini</option>
+                            <option value="gpt-4o" {{ 'selected' if om == 'gpt-4o' }}>GPT-4o</option>
+                            <option value="gpt-4o-mini" {{ 'selected' if om == 'gpt-4o-mini' }}>GPT-4o Mini</option>
+                        </select>
+                    </div>
+                    <a href="https://platform.openai.com/api-keys" target="_blank" class="help-link">Get API key →</a>
+                </div>
+            </div>
+
+            <!-- Claude -->
+            <div class="api-card">
+                <div class="api-card-header">
+                    <div class="api-icon claude">
+                        {{ icon('claude', size=20) }}
+                    </div>
+                    <div class="api-info">
+                        <h3>Anthropic Claude</h3>
+                        <p>Opus 4.6, Sonnet 4.5, Haiku 4.5</p>
+                    </div>
+                    {% if keys.get('claude') %}
+                    <span class="api-status">Configured</span>
+                    {% endif %}
+                </div>
+                <div class="api-form">
+                    {% if masked_keys.get('claude') %}
+                    <div class="key-row">
+                        <span>{{ masked_keys.claude }}</span>
+                        <button type="submit" form="delete-claude-form" class="btn-delete" title="Remove">
+                            {{ icon('x', size=14) }}
+                        </button>
+                    </div>
+                    {% endif %}
+                    {{ api_form.claude_key(class="api-input", placeholder="Enter Claude API key") }}
+                    <div class="model-select-row">
+                        <label class="model-label">Model</label>
+                        <select name="claude_model" id="claude-model" class="model-select">
+                            {% set cm = keys.get('claude_model', 'claude-sonnet-4-5') %}
+                            <option value="claude-opus-4-6" {{ 'selected' if cm == 'claude-opus-4-6' }}>Claude Opus 4.6</option>
+                            <option value="claude-sonnet-4-5" {{ 'selected' if cm == 'claude-sonnet-4-5' }}>Claude Sonnet 4.5</option>
+                            <option value="claude-haiku-4-5" {{ 'selected' if cm == 'claude-haiku-4-5' }}>Claude Haiku 4.5</option>
+                        </select>
+                    </div>
+                    <a href="https://console.anthropic.com/settings/keys" target="_blank" class="help-link">Get API key
+                        →</a>
+                </div>
+            </div>
+
+            <!-- Ollama -->
+            <div class="api-card">
+                <div class="api-card-header">
+                    <div class="api-icon ollama">
+                        {{ icon('ollama', size=20) }}
+                    </div>
+                    <div class="api-info">
+                        <h3>Ollama (Local)</h3>
+                        <p>Run models locally{% if keys.get('ollama_model') %} - {{ keys.get('ollama_model') }}{% endif
+                            %}
+                        </p>
+                    </div>
+                    {% if keys.get('ollama_url') or keys.get('ollama_model') %}
+                    <span class="api-status">Configured</span>
+                    {% endif %}
+                </div>
+                <div class="api-form">
+                    <div class="ollama-fields">
+                        <div style="display: flex; flex-direction: column;">
+                            <label>Server URL</label>
+                            <div style="display: flex; gap: 8px;">
+                                {{ api_form.ollama_url(class="api-input", placeholder="http://localhost:11434",
+                                id="ollama-url") }}
+                                <button type="button" id="fetch-models-btn" class="btn btn-secondary"
+                                    style="white-space: nowrap; padding: 0 12px; height: 42px; display: flex; align-items: center; gap: 6px;">
+                                    {{ icon('refresh', size=14) }}
+                                    Fetch
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label>Model</label>
+                            <select name="ollama_model" id="ollama-model" class="model-select">
+                                {% set saved_ollama = keys.get('ollama_model', '') %}
+                                {% if saved_ollama %}
+                                <option value="{{ saved_ollama }}" selected>{{ saved_ollama }}</option>
+                                {% else %}
+                                <option value="" disabled selected>Click Fetch →</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                    <a href="https://ollama.ai" target="_blank" class="help-link">Install Ollama →</a>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" name="submit_api" class="save-btn">
+            {{ icon('save', size=18) }}
+            Save API Settings
+        </button>
+    </form>
+</div>
+
+<div class="info-box" style="margin-top: 24px;">
+    {{ icon('shield', size=20) }}
+    <div>
+        <h4>Your keys are encrypted</h4>
+        <p>All API keys are encrypted before storage and never shared with third parties.</p>
+    </div>
+</div>
+
+<!-- Hidden forms for deletion -->
+<form id="delete-gemini-form" method="POST" action="{{ url_for('dashboard.delete_api_key', provider='gemini') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+<form id="delete-openai-form" method="POST" action="{{ url_for('dashboard.delete_api_key', provider='openai') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+<form id="delete-claude-form" method="POST" action="{{ url_for('dashboard.delete_api_key', provider='claude') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const fetchBtn = document.getElementById('fetch-models-btn');
+    const urlInput = document.getElementById('ollama-url');
+    const modelSelect = document.getElementById('ollama-model');
+
+    fetchBtn.addEventListener('click', async () => {
+        const url = urlInput.value.trim() || 'http://localhost:11434';
+
+        // Add loading state
+        const originalText = fetchBtn.innerHTML;
+        fetchBtn.innerHTML = '<span class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></span> Fetching...';
+        fetchBtn.disabled = true;
+
+        try {
+            const response = await fetch('/settings/ollama/models', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({ url: url })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.models.length > 0) {
+                const currentValue = modelSelect.value;
+
+                // Clear and rebuild options
+                modelSelect.innerHTML = '';
+
+                data.models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    if (model === currentValue) option.selected = true;
+                    modelSelect.appendChild(option);
+                });
+
+                // If no previous selection matched, select the first
+                if (!modelSelect.value) {
+                    modelSelect.selectedIndex = 0;
+                }
+
+                Toast.show(`Found ${data.models.length} models`, 'success');
+            } else {
+                Toast.show(data.error || 'No models found. Pull a model first with: ollama pull qwen3:8b', 'error');
+            }
+        } catch (error) {
+            console.error('Error fetching models:', error);
+            Toast.show('Failed to connect to Ollama. Is it running?', 'error');
+        } finally {
+            fetchBtn.innerHTML = originalText;
+            fetchBtn.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Access Denied - Pollivu{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="container">
+        <div class="error-content">
+            <div class="error-icon" style="color: var(--danger, #dc2626);">
+                {{ icon('lock', size=64) }}
+            </div>
+            <h1 class="error-code">403</h1>
+            <h2 class="error-title">Access Denied</h2>
+            <p class="error-message">
+                This poll has expired or been closed and is no longer accepting votes.
+            </p>
+            <div class="error-actions">
+                <a href="{{ url_for('polls.create_poll') }}" class="btn btn-primary btn-lg">Create New Poll</a>
+                <a href="{{ url_for('main.landing') }}" class="btn btn-secondary btn-lg">Go Home</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

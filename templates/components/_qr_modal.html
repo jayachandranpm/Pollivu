@@ -1,0 +1,35 @@
+<!-- QR Code Modal Component -->
+<div class="modal" id="qr-modal">
+    <div class="modal-overlay" onclick="closeQrModal()"></div>
+    <div class="modal-content" style="text-align: center;">
+        <h3 class="modal-title">Share via QR Code</h3>
+        <p class="modal-text">Scan this code to vote or view results</p>
+        <div class="qr-container" style="margin: 20px 0; width: 100%;">
+            <img id="qr-image" src="" alt="Poll QR Code"
+                style="max-width: 300px; height: auto; display: block; margin: 0 auto;">
+        </div>
+        <div class="modal-actions" style="justify-content: center;">
+            <button class="btn btn-secondary" onclick="closeQrModal()">Close</button>
+            <a id="download-qr-btn" href="#" download="poll_qr.png" class="btn btn-primary">Download</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showQrModal(pollId) {
+        const modal = document.getElementById('qr-modal');
+        const img = document.getElementById('qr-image');
+        const downloadBtn = document.getElementById('download-qr-btn');
+        const qrUrl = `/poll/${pollId}/qr`;
+
+        // Show loading state or placeholder if needed, but browser handles img loading well
+        img.src = qrUrl;
+        downloadBtn.href = qrUrl;
+
+        modal.classList.add('active');
+    }
+
+    function closeQrModal() {
+        document.getElementById('qr-modal').classList.remove('active');
+    }
+</script>

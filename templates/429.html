@@ -1,0 +1,79 @@
+{% extends 'base_app.html' if current_user.is_authenticated else 'base_minimal.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Too Many Requests - Pollivu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-page {
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .error-icon {
+        color: var(--warning-color, #f59e0b);
+        margin-bottom: 24px;
+        animation: pulse 2s infinite;
+    }
+
+    .error-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 16px;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .error-text {
+        color: var(--text-secondary);
+        font-size: 1.125rem;
+        max-width: 400px;
+        margin-bottom: 32px;
+        line-height: 1.6;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="error-icon">
+        {{ icon('clock', size=64, stroke_width=1.5) }}
+    </div>
+
+    <h1 class="error-title">Whoa, slow down!</h1>
+
+    <p class="error-text">
+        We've detected a lot of requests from your connection.
+        Please take a breather and try again in a moment.
+    </p>
+
+    <div class="actions">
+        <a href="{{ url_for('main.landing') }}" class="btn btn-primary btn-lg">
+            Return Home
+        </a>
+    </div>
+</div>
+{% endblock %}
