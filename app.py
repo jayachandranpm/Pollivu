@@ -22,7 +22,9 @@ from utils import generate_session_id, format_time_remaining
 validate_config()
 
 # Initialize Flask app
-app = Flask(__name__)
+# On Vercel/serverless (read-only filesystem), use /tmp for instance path
+_instance_path = '/tmp/instance' if os.path.exists('/var/task') else None
+app = Flask(__name__, instance_path=_instance_path)
 app.config.from_object(config[os.getenv('FLASK_ENV', 'production')])
 
 # Initialize extensions
