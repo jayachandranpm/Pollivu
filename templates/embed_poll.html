@@ -247,7 +247,7 @@
                 <div class="embed-radio"></div>
                 <div style="flex: 1;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span class="embed-option-text">{{ option.text }}</span>
+                        <span class="embed-option-text">{{ option.option_text }}</span>
                         <span class="embed-vote-count">{{ '%.0f' % pct }}%</span>
                     </div>
                     <div class="embed-bar-bg">
@@ -259,6 +259,9 @@
         </div>
 
         {% else %}
+        <!-- Results container (hidden initially, populated by JS after voting) -->
+        <div id="embed-results" style="display:none"></div>
+
         <!-- Show voting form -->
         <div id="embed-vote-form">
             <div class="embed-options">
@@ -267,7 +270,7 @@
                     <div class="embed-radio"></div>
                     <input type="radio" name="option" value="{{ option.id }}" style="display: none;"
                         onchange="this.closest('.embed-options').querySelectorAll('.embed-option').forEach(o => o.classList.remove('selected')); this.closest('.embed-option').classList.add('selected'); document.getElementById('embed-submit').disabled = false;">
-                    <span class="embed-option-text">{{ option.text }}</span>
+                    <span class="embed-option-text">{{ option.option_text }}</span>
                 </label>
                 {% endfor %}
             </div>
@@ -275,6 +278,89 @@
         </div>
 
         <script>
+            var POLL_ID = '{{ poll.id }}';
+            var STORAGE_KEY = 'pollivu_voted_' + POLL_ID;
+
+            // On page load: check localStorage, then verify with server
+            (function() {
+                var stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    try {
+                        var voteData = JSON.parse(stored);
+                        if (voteData.voted_option_id) {
+                            // Show cached results immediately, then refresh from server
+                            if (voteData.results) {
+                                showResults(voteData.results, voteData.voted_option_id, voteData.total_votes);
+                            }
+                            // Re-fetch fresh results from server
+                            fetch('/api/poll/' + POLL_ID + '/live_stats')
+                                .then(function(r) { return r.ok ? r.json() : null; })
+                                .then(function(data) {
+                                    if (data && data.success) {
+                                        voteData.results = data.results;
+                                        voteData.total_votes = data.total_votes;
+                                        localStorage.setItem(STORAGE_KEY, JSON.stringify(voteData));
+                                        showResults(data.results, voteData.voted_option_id, data.total_votes);
+                                    }
+                                })
+                                .catch(function() { /* keep cached data */ });
+                        }
+                    } catch(e) {
+                        localStorage.removeItem(STORAGE_KEY);
+                    }
+                }
+            })();
+
+            function escapeHtml(text) {
+                var div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function showResults(results, votedOptionId, totalVotes) {
+                var form = document.getElementById('embed-vote-form');
+                var resultsDiv = document.getElementById('embed-results');
+                if (form) form.style.display = 'none';
+
+                var html = '<div class="embed-msg success">✓ Your vote has been recorded</div>';
+                html += '<div class="embed-options">';
+                results.forEach(function(opt) {
+                    var isVoted = (opt.id == votedOptionId);
+                    var pct = Math.round(opt.percentage);
+                    html += '<div class="embed-option' + (isVoted ? ' voted' : '') + '">';
+                    html += '<div class="embed-radio"></div>';
+                    html += '<div style="flex: 1;">';
+                    html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
+                    html += '<span class="embed-option-text">' + escapeHtml(opt.option_text) + '</span>';
+                    html += '<span class="embed-vote-count">' + pct + '%</span>';
+                    html += '</div>';
+                    html += '<div class="embed-bar-bg"><div class="embed-bar-fill" style="width: ' + opt.percentage + '%"></div></div>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+                resultsDiv.style.display = '';
+
+                // Update footer total votes
+                if (totalVotes !== undefined) {
+                    var totalEl = document.querySelector('.embed-total');
+                    if (totalEl) {
+                        totalEl.textContent = totalVotes + ' vote' + (totalVotes !== 1 ? 's' : '');
+                    }
+                }
+            }
+
+            function showInlineMessage(text, type) {
+                var existing = document.querySelector('#embed-vote-form > .embed-msg');
+                if (existing) existing.remove();
+                var msg = document.createElement('div');
+                msg.className = 'embed-msg ' + (type || 'info');
+                msg.textContent = text;
+                var form = document.getElementById('embed-vote-form');
+                if (form) form.insertBefore(msg, form.firstChild);
+            }
+
             function submitEmbedVote() {
                 var selected = document.querySelector('input[name="option"]:checked');
                 if (!selected) return;
@@ -292,29 +378,41 @@
                         'X-CSRFToken': csrfToken
                     },
                     body: JSON.stringify({ option_id: selected.value }),
-                    credentials: 'same-origin'
+                    credentials: 'include'
                 })
                 .then(function(r) {
-                    if (r.status === 400 && !csrfToken) {
-                        // CSRF failed — likely cross-origin embed, open full poll
-                        throw new Error('csrf');
+                    if (!r.ok) {
+                        return r.text().then(function(body) {
+                            var errMsg = 'Could not submit vote.';
+                            try {
+                                var parsed = JSON.parse(body);
+                                errMsg = parsed.error || errMsg;
+                            } catch(e) {}
+                            throw new Error(errMsg);
+                        });
                     }
                     return r.json();
                 })
                 .then(function(data) {
                     if (data.success) {
-                        window.location.reload();
+                        // Persist vote in localStorage (survives page reload & cross-origin sessions)
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                            results: data.results,
+                            voted_option_id: data.voted_option_id,
+                            total_votes: data.total_votes
+                        }));
+                        // Render results client-side — no page reload needed
+                        showResults(data.results, data.voted_option_id, data.total_votes);
                     } else {
                         btn.disabled = false;
                         btn.textContent = 'Vote';
-                        alert(data.error || 'Could not submit vote.');
+                        showInlineMessage(data.error || 'Could not submit vote.', 'info');
                     }
                 })
                 .catch(function(err) {
-                    // Fallback: open full poll page for voting
-                    window.open('{{ url_for("polls.view_poll", poll_id=poll.id, _external=True) }}', '_blank');
                     btn.disabled = false;
                     btn.textContent = 'Vote';
+                    showInlineMessage(err.message || 'Unable to vote. Please try opening the poll directly.', 'info');
                 });
             }
         </script>

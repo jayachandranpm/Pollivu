@@ -265,15 +265,7 @@
                                     <p>Opus 4.6 · Sonnet 4.5 · Haiku 4.5</p>
                                 </div>
                             </div>
-                            <div class="ai-provider animate-on-scroll" style="--delay: 0.4s">
-                                <div class="ai-provider-icon ollama">
-                                    {{ icon('ollama', size=24) }}
-                                </div>
-                                <div class="ai-provider-info">
-                                    <h4>Ollama (Local)</h4>
-                                    <p>Run AI locally — 100% private</p>
-                                </div>
-                            </div>
+
                         </div>
 
                         <a href="{{ url_for('auth.register') }}" class="btn-primary btn-ai">
@@ -620,9 +612,9 @@
                 </div>
                 <div class="footer-col">
                     <h4>Product</h4>
-                    <a href="#features">Features</a>
-                    <a href="#how-it-works">How It Works</a>
-                    <a href="#use-cases">Use Cases</a>
+                    <a href="#features" onclick="event.preventDefault(); scrollToSection('features');">Features</a>
+                    <a href="#how-it-works" onclick="event.preventDefault(); scrollToSection('how-it-works');">How It Works</a>
+                    <a href="#use-cases" onclick="event.preventDefault(); scrollToSection('use-cases');">Use Cases</a>
                     <a href="{{ url_for('polls.create_poll') }}">Create Poll</a>
                 </div>
                 <div class="footer-col">
@@ -680,8 +672,8 @@
             menuIcon.classList.toggle('hidden');
             closeIcon.classList.toggle('hidden');
 
-            if (!menu.classList.contains('hidden')) {
-                menu.style.display = 'flex';
+            if (menu.classList.contains('hidden')) {
+                menu.style.removeProperty('display');
             }
         }
 

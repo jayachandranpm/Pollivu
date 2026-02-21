@@ -144,6 +144,7 @@ class PollService:
     @staticmethod
     def edit_poll(poll, form_data):
         """Update poll settings and expiration."""
+        poll.updated_at = datetime.now(timezone.utc)
         poll.question = sanitize_text(form_data.get('question'))
         poll.allow_vote_change = form_data.get('allow_vote_change')
         poll.show_results_before_voting = form_data.get('show_results_before_voting')
@@ -210,6 +211,7 @@ class PollService:
     def toggle_public(poll):
         """Toggle public/private status."""
         poll.is_public = not poll.is_public
+        poll.updated_at = datetime.now(timezone.utc)
         db.session.commit()
         return poll.is_public
 
@@ -217,6 +219,7 @@ class PollService:
     def close_poll(poll):
         """Close a poll."""
         poll.is_closed = True
+        poll.updated_at = datetime.now(timezone.utc)
         db.session.commit()
         logger.info(f"Poll closed: {poll.id}")
     
@@ -224,6 +227,7 @@ class PollService:
     def reopen_poll(poll):
         """Reopen a poll."""
         poll.is_closed = False
+        poll.updated_at = datetime.now(timezone.utc)
         db.session.commit()
         logger.info(f"Poll reopened: {poll.id}")
         

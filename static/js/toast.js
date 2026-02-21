@@ -11,9 +11,15 @@ const Toast = {
         if (!document.getElementById('toast-container')) {
             this.container = document.createElement('div');
             this.container.id = 'toast-container';
+            this.container.setAttribute('aria-live', 'polite');
+            this.container.setAttribute('aria-atomic', 'false');
+            this.container.setAttribute('role', 'status');
             document.body.appendChild(this.container);
         } else {
             this.container = document.getElementById('toast-container');
+            this.container.setAttribute('aria-live', 'polite');
+            this.container.setAttribute('aria-atomic', 'false');
+            this.container.setAttribute('role', 'status');
         }
     },
 
@@ -50,9 +56,10 @@ const Toast = {
         // Remove after duration
         setTimeout(() => {
             toast.classList.remove('show');
-            toast.addEventListener('transitionend', () => {
-                toast.remove();
-            });
+            const cleanup = () => toast.remove();
+            toast.addEventListener('transitionend', cleanup, { once: true });
+            // Fallback: remove after 500ms if transitionend never fires
+            setTimeout(cleanup, 500);
         }, duration);
     }
 };

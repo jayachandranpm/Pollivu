@@ -202,16 +202,34 @@
     }
 
     function addOptionToPreview(text = '', index = null) {
+        if (previewOptions.children.length >= 10) {
+            showToast('Maximum 10 options allowed', 'error');
+            return;
+        }
         const count = previewOptions.children.length + 1;
+        const num = index || count;
+
         const div = document.createElement('div');
         div.className = 'preview-option';
-        div.innerHTML = `
-            <span class="opt-num">${index || count}</span>
-            <input type="text" value="${text}" placeholder="Option ${index || count}">
-            <button type="button" class="opt-delete" onclick="this.parentElement.remove()">
-                {{ icon('x', size=14) }}
-            </button>
-        `;
+
+        const span = document.createElement('span');
+        span.className = 'opt-num';
+        span.textContent = num;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = text;
+        input.placeholder = 'Option ' + num;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'opt-delete';
+        btn.innerHTML = `{{ icon('x', size=14) }}`;
+        btn.addEventListener('click', () => div.remove());
+
+        div.appendChild(span);
+        div.appendChild(input);
+        div.appendChild(btn);
         previewOptions.appendChild(div);
     }
 

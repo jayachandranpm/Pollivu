@@ -1,7 +1,7 @@
 """
 Pollivu - AI Service
 Multi-provider AI integration for poll generation and suggestions.
-Supports: Google Gemini, OpenAI, Anthropic Claude, Ollama
+Supports: Google Gemini, OpenAI, Anthropic Claude
 """
 
 import json
@@ -399,112 +399,13 @@ class ClaudeProvider(AIProvider):
             return False
 
 
-class OllamaProvider(AIProvider):
-    """Ollama local model provider."""
-    
-    # Popular models (fetched dynamically from user's Ollama instance):
-    # - llama3.3:latest, llama3.1:8b
-    # - qwen3:8b, qwen3:4b, qwen3:1.7b
-    # - gemma3:12b, gemma3:4b, gemma3:1b
-    # - mistral:latest, phi4:latest
-    # - deepseek-r1:8b, deepseek-r1:1.5b
-    
-    def __init__(self, base_url: str = 'http://localhost:11434', model: str = 'qwen3:8b'):
-        self.base_url = base_url.rstrip('/').strip()
-        self.model = model.strip()  # Remove any trailing whitespace
-    
-    def generate_poll(self, topic: str, num_options: int = 4, style: str = 'neutral') -> Dict[str, Any]:
-        prompt = self._get_generation_prompt(topic, num_options, style)
-        
-        url = f"{self.base_url}/api/generate"
-        data = {
-            'model': self.model,
-            'prompt': prompt,
-            'stream': False,
-            'format': 'json',
-            'options': {
-                'temperature': 0.7
-            }
-        }
-        
-        response = requests.post(url, json=data, timeout=60)
-        response.raise_for_status()
-        
-        result = response.json()
-        text = result['response']
-        return self._parse_json_response(text)
-    
-    def suggest_improvements(self, question: str, options: List[str]) -> Dict[str, Any]:
-        prompt = self._get_suggestion_prompt(question, options)
-        
-        url = f"{self.base_url}/api/generate"
-        data = {
-            'model': self.model,
-            'prompt': prompt,
-            'stream': False,
-            'format': 'json',
-            'options': {
-                'temperature': 0.5
-            }
-        }
-        
-        response = requests.post(url, json=data, timeout=60)
-        response.raise_for_status()
-        
-        result = response.json()
-        text = result['response']
-        return self._parse_json_response(text)
-
-    def suggest_new_options(self, question: str, existing_options: List[str], num_options: int = 4) -> Dict[str, Any]:
-        prompt = self._get_new_options_prompt(question, existing_options, num_options)
-        
-        url = f"{self.base_url}/api/generate"
-        data = {
-            'model': self.model,
-            'prompt': prompt,
-            'stream': False,
-            'format': 'json',
-            'options': {
-                'temperature': 0.8
-            }
-        }
-        
-        response = requests.post(url, json=data, timeout=60)
-        response.raise_for_status()
-        
-        result = response.json()
-        text = result['response']
-        return self._parse_json_response(text)
-
-    def test_connection(self) -> bool:
-        try:
-            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
-            return response.status_code == 200
-        except Exception as e:
-            logger.warning(f"Ollama connection test failed: {e}")
-            return False
-    
-    def get_models(self) -> List[str]:
-        """Fetch available models from Ollama instance."""
-        try:
-            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                return [model['name'] for model in data.get('models', [])]
-            return []
-        except Exception as e:
-            logger.warning(f"Failed to fetch Ollama models: {e}")
-            return []
-
-
 class AIService:
     """Main AI service that manages providers and handles requests."""
     
     PROVIDERS = {
         'gemini': GeminiProvider,
         'openai': OpenAIProvider,
-        'claude': ClaudeProvider,
-        'ollama': OllamaProvider
+        'claude': ClaudeProvider
     }
     
     def __init__(self, user=None, secret_key: str = None):
@@ -541,11 +442,6 @@ class AIService:
                 raise ValueError("Claude API key not configured")
             model = keys.get('claude_model', 'claude-sonnet-4-5')
             return ClaudeProvider(key, model=model)
-        
-        elif provider_name == 'ollama':
-            url = keys.get('ollama_url', 'http://localhost:11434')
-            model = keys.get('ollama_model', 'qwen3:8b')
-            return OllamaProvider(url, model)
         
         return None
     
@@ -608,22 +504,4 @@ class AIService:
                 'models': ['claude-opus-4-6', 'claude-sonnet-4-5', 'claude-haiku-4-5']
             })
         
-        # Ollama only shows if explicitly configured
-        if keys.get('ollama_url') or keys.get('ollama_model'):
-            providers.append({
-                'id': 'ollama',
-                'name': 'Ollama (Local)',
-                'configured': True,
-                'models': ['qwen3:8b', 'llama3.3:latest', 'gemma3:12b', 'mistral:latest', 'deepseek-r1:8b', 'phi4:latest']
-            })
-        
         return providers
-
-    def get_ollama_models(self, url: str) -> List[str]:
-        """Fetch models from a specific Ollama URL."""
-        try:
-            provider = OllamaProvider(url, '')
-            return provider.get_models()
-        except Exception as e:
-            logger.warning(f"Failed to fetch Ollama models from {url}: {e}")
-            return []

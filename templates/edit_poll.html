@@ -183,12 +183,19 @@
         div.setAttribute('data-id', option.id);
         div.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--bg-secondary); border-radius: 8px;';
 
-        div.innerHTML = `
-            <span style="flex: 1; font-weight: 500;">${option.option_text}</span>
-            <button type="button" class="btn btn-sm btn-icon" onclick="deleteOption('${option.id}')" style="color: var(--danger); padding: 4px;">
-                {{ icon('delete', size=18) }}
-            </button>
-        `;
+        const span = document.createElement('span');
+        span.style.cssText = 'flex: 1; font-weight: 500;';
+        span.textContent = option.option_text;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-icon';
+        btn.style.cssText = 'color: var(--danger); padding: 4px;';
+        btn.innerHTML = `{{ icon('delete', size=18) }}`;
+        btn.addEventListener('click', () => deleteOption(option.id));
+
+        div.appendChild(span);
+        div.appendChild(btn);
         list.appendChild(div);
     }
 
@@ -280,25 +287,27 @@
                 if (data.success && data.suggestions.length > 0) {
                     const container = document.getElementById('ai-suggestions');
                     container.style.display = 'block';
+                    container.innerHTML = '';
 
-                    // Build HTML with text stored directly on each button
-                    let html = '<p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">Click to add:</p>';
-                    html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+                    const hint = document.createElement('p');
+                    hint.style.cssText = 'font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;';
+                    hint.textContent = 'Click to add:';
+                    container.appendChild(hint);
+
+                    const btnWrap = document.createElement('div');
+                    btnWrap.style.cssText = 'display: flex; flex-wrap: wrap; gap: 8px;';
+
                     data.suggestions.forEach((text) => {
-                        // Escape text for HTML attribute (use encodeURIComponent for safety)
-                        const safeText = encodeURIComponent(text);
-                        html += `<button type="button" class="btn btn-sm btn-secondary ai-suggestion-btn" data-text="${safeText}">+ ${text}</button>`;
-                    });
-                    html += '</div>';
-                    container.innerHTML = html;
-
-                    // Attach click handlers - get text directly from button's data-text
-                    container.querySelectorAll('.ai-suggestion-btn').forEach(btn => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn btn-sm btn-secondary ai-suggestion-btn';
+                        btn.textContent = '+ ' + text;
                         btn.addEventListener('click', function () {
-                            const text = decodeURIComponent(this.dataset.text);
                             addSuggestedOption(this, text);
                         });
+                        btnWrap.appendChild(btn);
                     });
+                    container.appendChild(btnWrap);
                 } else {
                     showToast(data.error || 'No suggestions found', 'error');
                 }

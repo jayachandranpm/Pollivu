@@ -73,10 +73,13 @@
         </a>
 
         <!-- Logout -->
-        <a href="{{ url_for('auth.logout') }}" class="nav-btn nav-btn--danger" title="Logout">
-            {{ icon('sidebar_logout', size=20, stroke_width=1.8) }}
-            <span class="nav-label">Logout</span>
-        </a>
+        <form method="POST" action="{{ url_for('auth.logout') }}" style="margin:0;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="nav-btn nav-btn--danger" title="Logout" style="width:100%;">
+                {{ icon('sidebar_logout', size=20, stroke_width=1.8) }}
+                <span class="nav-label">Logout</span>
+            </button>
+        </form>
         {% else %}
         <!-- Login -->
         <a href="{{ url_for('auth.login') }}" class="nav-btn" title="Login">

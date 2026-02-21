@@ -65,11 +65,6 @@
     background: transparent;
 }
 
-.api-icon.ollama {
-    /* background: linear-gradient(135deg, var(--emerald), var(--emerald-dark)); */
-    background: transparent;
-}
-
 .api-info {
     flex: 1;
 }
@@ -151,35 +146,7 @@
     text-decoration: underline;
 }
 
-.ollama-fields {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 16px;
-}
 
-.ollama-fields label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--forest-green);
-    margin-bottom: 6px;
-}
-
-.ollama-fields input {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid var(--light-green);
-    font-size: 14px;
-    font-family: var(--font-family);
-    transition: border-color 0.3s ease;
-    border-radius: 10px;
-}
-
-.ollama-fields input:focus {
-    outline: none;
-    border-color: var(--emerald);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
-}
 
 .save-btn {
     display: inline-flex;
@@ -250,11 +217,7 @@
     color: #dc2626;
 }
 
-@media (max-width: 640px) {
-    .ollama-fields {
-        grid-template-columns: 1fr;
-    }
-}
+
 
 .api-input {
     width: 100%;
@@ -319,10 +282,6 @@
 .model-select option {
     padding: 8px;
     font-family: var(--font-family);
-}
-
-.ollama-fields .model-select {
-    width: 100%;
 }
 
 /* Account Form Styles */

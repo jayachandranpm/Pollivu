@@ -136,6 +136,8 @@ class Poll(EncryptedMixin, db.Model):
     # Encrypted question for sensitive polls
     _question_encrypted = db.Column('question_encrypted', db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
+                           onupdate=lambda: datetime.now(timezone.utc))
     expires_at = db.Column(db.DateTime, nullable=True)
     allow_vote_change = db.Column(db.Boolean, default=False)
     show_results_before_voting = db.Column(db.Boolean, default=False)
@@ -216,6 +218,7 @@ class Poll(EncryptedMixin, db.Model):
             'id': self.id,
             'question': self.question,
             'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'expires_at': self.expires_at.isoformat() if self.expires_at else None,
             'allow_vote_change': self.allow_vote_change,
             'show_results_before_voting': self.show_results_before_voting,

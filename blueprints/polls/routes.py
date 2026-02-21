@@ -16,7 +16,7 @@ try:
 except ImportError:
     QR_AVAILABLE = False
 
-from extensions import db, limiter, cache
+from extensions import db, limiter, cache, csrf
 from models import User, Poll, PollOption, Vote
 from forms import PollCreationForm, EditPollForm, AIGenerateForm
 from utils import (is_valid_poll_id, generate_voter_token, hash_voter_token,
@@ -105,6 +105,7 @@ def view_poll(poll_id):
 
 
 @polls_bp.route('/poll/<poll_id>/vote', methods=['POST'])
+@csrf.exempt
 @limiter.limit("30 per minute")
 def vote(poll_id):
     if not is_valid_poll_id(poll_id):
@@ -129,15 +130,6 @@ def vote(poll_id):
     success, message, result_data = PollService.vote(poll, option_id, session_id)
     
     if success:
-        # Emit real-time update
-        from extensions import socketio
-        socketio.emit('new_vote', {
-            'poll_id': poll.id,
-            'total_votes': result_data.get('total_votes'),
-            'option_id': option_id,
-            'results': result_data.get('results')
-        }, room=f"poll_{poll.id}")
-        
         return jsonify({
             'success': True,
             'message': message,
@@ -187,14 +179,6 @@ def close_poll(poll_id):
     
     PollService.close_poll(poll)
     
-    from extensions import socketio
-    socketio.emit('poll_settings_updated', {
-        'poll_id': poll.id,
-        'is_closed': True,
-        'is_active': False,
-        'message': 'Poll has been closed'
-    }, room=f"poll_{poll.id}")
-    
     return jsonify({'success': True, 'message': 'Poll closed'})
 
 
@@ -210,14 +194,6 @@ def reopen_poll(poll_id):
         poll.expires_at = None
 
     PollService.reopen_poll(poll)
-    
-    from extensions import socketio
-    socketio.emit('poll_settings_updated', {
-        'poll_id': poll.id,
-        'is_closed': False,
-        'is_active': poll.is_active,
-        'message': 'Poll has been reopened'
-    }, room=f"poll_{poll.id}")
     
     return jsonify({'success': True, 'message': 'Poll reopened'})
 
@@ -251,13 +227,6 @@ def toggle_public(poll_id):
         return jsonify({'error': 'Unauthorized'}), 403
     
     is_public = PollService.toggle_public(poll)
-    
-    from extensions import socketio
-    socketio.emit('poll_settings_updated', {
-        'poll_id': poll.id,
-        'is_public': is_public,
-        'message': f"Poll is now {'public' if is_public else 'private'}"
-    }, room=f"poll_{poll.id}")
     
     status = 'public' if is_public else 'private'
     return jsonify({'success': True, 'is_public': is_public, 'message': f'Poll is now {status}'})
@@ -297,18 +266,6 @@ def edit_poll(poll_id):
         }
         
         PollService.edit_poll(poll, form_data)
-        
-        from extensions import socketio
-        socketio.emit('poll_settings_updated', {
-            'poll_id': poll.id,
-            'question': poll.question,
-            'is_closed': poll.is_closed,
-            'is_active': poll.is_active,
-            'is_public': poll.is_public,
-            'allow_vote_change': poll.allow_vote_change,
-            'show_results_before_voting': poll.show_results_before_voting,
-            'message': 'Poll settings have been updated'
-        }, room=f"poll_{poll.id}")
         
         flash('Poll settings updated successfully.', 'success')
         return redirect(url_for('dashboard.dashboard'))

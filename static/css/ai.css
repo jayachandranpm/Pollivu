@@ -94,23 +94,15 @@
 }
 
 .provider-icon.gemini {
-    /* background: linear-gradient(135deg, #4285f4, #34a853); */
-    background: transparent;
+    background: linear-gradient(135deg, #4285f4, #34a853);
 }
 
 .provider-icon.openai {
-    /* background: #000; */
-    background: transparent;
+    background: #000;
 }
 
 .provider-icon.claude {
-    /* background: linear-gradient(135deg, #d97706, #b45309); */
-    background: transparent;
-}
-
-.provider-icon.ollama {
-    /* background: linear-gradient(135deg, var(--emerald), var(--emerald-dark)); */
-    background: transparent;
+    background: linear-gradient(135deg, #d97706, #b45309);
 }
 
 .provider-name {

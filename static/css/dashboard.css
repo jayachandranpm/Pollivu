@@ -209,7 +209,7 @@
     height: 6px;
     background: var(--success-color);
     border-radius: 50%;
-    animation: pulse 2s infinite;
+    animation: pulse-status 2s infinite;
 }
 
 .status-closed {
@@ -523,10 +523,6 @@
     background: linear-gradient(135deg, #D97706, #B45309);
 }
 
-.provider-icon.ollama {
-    background: var(--gradient-primary);
-}
-
 .provider-info {
     flex: 1;
 }
@@ -590,11 +586,7 @@
     color: var(--primary-color);
 }
 
-.ollama-config .form-row {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: var(--spacing-md);
-}
+
 
 .form-label-sm {
     font-size: var(--font-size-sm);
@@ -948,10 +940,6 @@
         height: 40px;
     }
 
-    .ollama-config .form-row {
-        grid-template-columns: 1fr;
-    }
-
     /* AI Create page mobile */
     .options-row {
         grid-template-columns: 1fr;
@@ -1039,7 +1027,7 @@
 }
 
 /* Pulse animation for active status dot */
-@keyframes pulse {
+@keyframes pulse-status {
 
     0%,
     100% {

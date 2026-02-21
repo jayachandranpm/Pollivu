@@ -138,15 +138,7 @@ class APIKeyForm(FlaskForm):
         Length(max=100)
     ])
     
-    ollama_url = StringField('Ollama Server URL', validators=[
-        Optional(),
-        Length(max=255)
-    ])
-    
-    ollama_model = StringField('Ollama Model Name', validators=[
-        Optional(),
-        Length(max=100)
-    ])
+
 
 
 # ============================================================================
@@ -163,8 +155,7 @@ class AIGenerateForm(FlaskForm):
     provider = SelectField('AI Provider', choices=[
         ('gemini', 'Google Gemini'),
         ('openai', 'OpenAI (GPT-4)'),
-        ('claude', 'Anthropic Claude'),
-        ('ollama', 'Ollama (Local)')
+        ('claude', 'Anthropic Claude')
     ], validators=[DataRequired()])
     
     num_options = SelectField('Number of Options', choices=[
@@ -197,8 +188,7 @@ class AISuggestForm(FlaskForm):
     provider = SelectField('AI Provider', choices=[
         ('gemini', 'Google Gemini'),
         ('openai', 'OpenAI (GPT-4)'),
-        ('claude', 'Anthropic Claude'),
-        ('ollama', 'Ollama (Local)')
+        ('claude', 'Anthropic Claude')
     ], validators=[DataRequired()])
 
 

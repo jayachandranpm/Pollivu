@@ -74,12 +74,6 @@ def settings():
         if api_form.claude_model.data and api_form.claude_model.data.strip():
             current_user.set_api_key('claude_model', api_form.claude_model.data.strip(), current_app.config['SECRET_KEY'])
         
-        # Always save Ollama settings (even if updating to different values)
-        ollama_url = api_form.ollama_url.data.strip() if api_form.ollama_url.data else 'http://localhost:11434'
-        ollama_model = api_form.ollama_model.data.strip() if api_form.ollama_model.data else 'qwen3:8b'
-        current_user.set_api_key('ollama_url', ollama_url, current_app.config['SECRET_KEY'])
-        current_user.set_api_key('ollama_model', ollama_model, current_app.config['SECRET_KEY'])
-        
         db.session.add(current_user)
         db.session.commit()
         logger.info(f"API keys updated for user {current_user.id}")
@@ -96,8 +90,6 @@ def settings():
         api_form.gemini_model.data = keys.get('gemini_model', 'gemini-2.5-flash')
         api_form.openai_model.data = keys.get('openai_model', 'gpt-4.1')
         api_form.claude_model.data = keys.get('claude_model', 'claude-sonnet-4-5')
-        api_form.ollama_url.data = keys.get('ollama_url', 'http://localhost:11434')
-        api_form.ollama_model.data = keys.get('ollama_model', '')
     
     # Mask existing keys for display (first 8 + last 4 chars only)
     masked_keys = {}
@@ -117,8 +109,6 @@ def settings():
         'gemini_model': keys.get('gemini_model', 'gemini-2.5-flash'),
         'openai_model': keys.get('openai_model', 'gpt-4.1'),
         'claude_model': keys.get('claude_model', 'claude-sonnet-4-5'),
-        'ollama_url': keys.get('ollama_url', ''),
-        'ollama_model': keys.get('ollama_model', ''),
     }
     
     return render_template('settings.html', api_form=api_form, account_form=account_form, keys=safe_keys, masked_keys=masked_keys)
@@ -128,7 +118,7 @@ def settings():
 @login_required
 def delete_api_key(provider):
     # Whitelist valid provider names
-    valid_providers = ['gemini', 'openai', 'claude', 'ollama_url', 'ollama_model',
+    valid_providers = ['gemini', 'openai', 'claude',
                        'gemini_model', 'openai_model', 'claude_model']
     if provider not in valid_providers:
         flash('Invalid provider.', 'error')
@@ -148,16 +138,4 @@ def delete_api_key(provider):
     return redirect(url_for('dashboard.settings'))
 
 
-@dashboard_bp.route('/settings/ollama/models', methods=['POST'])
-@login_required
-def fetch_ollama_models():
-    data = request.get_json()
-    url = data.get('url', 'http://localhost:11434')
-    
-    ai_service = AIService()
-    models = ai_service.get_ollama_models(url)
-    
-    if models:
-        return jsonify({'success': True, 'models': models})
-    else:
-        return jsonify({'success': False, 'error': 'Could not fetch models. Check URL and ensure Ollama is running.'}), 400
+

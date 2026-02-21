@@ -33,15 +33,7 @@
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
+body.auth-body {
     font-family: var(--font-paragraph);
     color: var(--forest-green);
     background-color: var(--white);
@@ -370,11 +362,11 @@ body {
     width: 100%;
 }
 
-.btn svg {
+.btn-primary svg {
     transition: transform var(--transition-normal);
 }
 
-.btn:hover svg {
+.btn-primary:hover svg {
     transform: translateX(4px);
 }
 

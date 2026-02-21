@@ -63,7 +63,7 @@
                 {% endfor %}
             </div>
 
-            <button type="button" class="btn btn-add-option" id="add-option-btn" onclick="addOption()">
+            <button type="button" class="btn btn-add-option" id="add-option-btn" onclick="addOption(event)">
                 {{ icon('manual_poll') }}
                 Add Option
             </button>
@@ -146,10 +146,15 @@
         }
     });
 
+    // Initialize question counter with pre-filled value
+    questionCount.textContent = questionInput.value.length;
+
     // Option character counters
     document.querySelectorAll('.option-input').forEach(input => {
         const counter = input.parentElement.querySelector('.option-count');
         if (counter) {
+            // Initialize with pre-filled value
+            counter.textContent = input.value.length;
             input.addEventListener('input', () => {
                 counter.textContent = input.value.length;
                 if (input.value.length > 200) {
@@ -162,7 +167,8 @@
     });
 
     // Add option
-    function addOption() {
+    function addOption(e) {
+        if (e) e.preventDefault();
         if (visibleOptions >= maxOptions) return;
 
         visibleOptions++;
@@ -191,13 +197,26 @@
         document.getElementById('add-option-btn').style.display = 'flex';
     }
 
-    // Reorder options to fill gaps
+    // Reorder options to fill gaps and update numbering
     function reorderOptions() {
         const container = document.getElementById('options-container');
         const visibleRows = Array.from(container.querySelectorAll('.option-row:not(.hidden)'));
         const hiddenRows = Array.from(container.querySelectorAll('.option-row.hidden'));
 
         visibleOptions = visibleRows.length;
+
+        // Update numbering on visible rows
+        visibleRows.forEach((row, idx) => {
+            const num = idx + 1;
+            const numberEl = row.querySelector('.option-number');
+            if (numberEl) numberEl.textContent = num;
+            const input = row.querySelector('.option-input');
+            if (input && num > 2) {
+                input.placeholder = 'Option ' + num + ' (optional)';
+            } else if (input) {
+                input.placeholder = 'Option ' + num;
+            }
+        });
 
         // Move hidden rows to end
         hiddenRows.forEach(row => container.appendChild(row));

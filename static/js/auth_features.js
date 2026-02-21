@@ -10,8 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const targetId = btn.getAttribute('data-target');
-            const input = document.getElementById(targetId);
+            const input = targetId ? document.getElementById(targetId) : null;
             const icon = btn.querySelector('svg');
+
+            if (!input || !icon) return;
 
             if (input.type === 'password') {
                 input.type = 'text';

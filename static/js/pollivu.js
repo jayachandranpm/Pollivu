@@ -57,18 +57,41 @@ const Pollivu = {
         },
 
         showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
+            // Delegate to the unified Toast system if available
+            if (typeof Toast !== 'undefined' && Toast.show) {
+                Toast.show(message, type);
+                return;
+            }
+
+            // Fallback: create structured HTML matching toast.css
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                document.body.appendChild(container);
+            }
+
+            const icons = {
+                success: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+                error: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+                info: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+            };
 
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
-            toast.textContent = message;
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.info}</div>
+                <div class="toast-message">${message}</div>
+            `;
 
             container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 100);
+            requestAnimationFrame(() => toast.classList.add('show'));
             setTimeout(() => {
                 toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
+                const cleanup = () => toast.remove();
+                toast.addEventListener('transitionend', cleanup, { once: true });
+                // Fallback: remove after 500ms if transitionend never fires
+                setTimeout(cleanup, 500);
             }, 3000);
         },
 
@@ -94,10 +117,51 @@ const Pollivu = {
                     document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
                 });
             });
+
+            // Escape key closes active modals
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+                }
+            });
+
+            // Focus trapping inside active modals
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Tab') return;
+                const modal = document.querySelector('.modal.active .modal-content');
+                if (!modal) return;
+                const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                if (focusable.length === 0) return;
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (e.shiftKey) {
+                    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+                } else {
+                    if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+                }
+            });
         },
 
         attachDropdownHandlers() {
-            // If any global dropdown handling is needed
+            // Close all dropdowns when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.poll-actions-dropdown')) {
+                    this.closeAllDropdowns();
+                }
+            });
+
+            // Close dropdowns on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.closeAllDropdowns();
+                }
+            });
+        },
+
+        closeAllDropdowns() {
+            document.querySelectorAll('.poll-actions-dropdown.active').forEach(d => {
+                d.classList.remove('active');
+            });
         },
 
         attachSmoothScroll() {
@@ -163,7 +227,17 @@ const Pollivu = {
         attachOptionHandlers() {
             const options = document.querySelectorAll('.option-card');
             options.forEach(option => {
+                // Skip already-voted options that don't allow vote change
+                if (option.classList.contains('voted')) {
+                    const radio = option.querySelector('input[type="radio"]');
+                    if (radio && radio.disabled) return;
+                }
                 option.addEventListener('click', () => {
+                    // Don't allow selection on voted cards without vote change
+                    if (option.classList.contains('voted')) {
+                        const radio = option.querySelector('input[type="radio"]');
+                        if (radio && radio.disabled) return;
+                    }
                     options.forEach(o => o.classList.remove('selected'));
                     option.classList.add('selected');
                     // auto select radio
@@ -184,6 +258,11 @@ const Pollivu = {
         },
 
         async submitVote() {
+            if (!this.currentPollId) {
+                Pollivu.UI.showToast('Poll not loaded. Please refresh the page.', 'error');
+                return;
+            }
+
             const selectedOption = document.querySelector('input[name="option"]:checked');
             if (!selectedOption) {
                 Pollivu.UI.showToast('Please select an option', 'error');
@@ -296,6 +375,10 @@ const Pollivu = {
                     } else {
                         Pollivu.UI.showToast(data.error, 'error');
                     }
+                })
+                .catch(err => {
+                    console.error('Toggle public error:', err);
+                    Pollivu.UI.showToast('Network error. Please try again.', 'error');
                 });
         },
 
@@ -312,6 +395,10 @@ const Pollivu = {
                     } else {
                         Pollivu.UI.showToast(data.error, 'error');
                     }
+                })
+                .catch(err => {
+                    console.error('Close poll error:', err);
+                    Pollivu.UI.showToast('Network error. Please try again.', 'error');
                 });
         },
 
@@ -328,6 +415,10 @@ const Pollivu = {
                     } else {
                         Pollivu.UI.showToast(data.error, 'error');
                     }
+                })
+                .catch(err => {
+                    console.error('Reopen poll error:', err);
+                    Pollivu.UI.showToast('Network error. Please try again.', 'error');
                 });
         },
 
@@ -352,15 +443,31 @@ const Pollivu = {
                     } else {
                         Pollivu.UI.showToast(data.error, 'error');
                     }
+                })
+                .catch(err => {
+                    console.error('Delete poll error:', err);
+                    Pollivu.UI.showToast('Network error. Please try again.', 'error');
                 });
         },
 
         // Realtime
+        pollingInterval: 30000,
+        maxPollingInterval: 300000,
+        basePollingInterval: 30000,
+
         async fetchStats() {
             try {
                 const res = await fetch(`/api/poll/${this.currentPollId}/live_stats`);
-                if (res.status === 429) return false;
+                if (res.status === 429) {
+                    // Backoff: double the interval, capped at maxPollingInterval
+                    this.pollingInterval = Math.min(this.pollingInterval * 2, this.maxPollingInterval);
+                    this.restartPolling();
+                    return true; // keep polling active
+                }
                 if (!res.ok) return true;
+
+                // Reset interval on success
+                this.pollingInterval = this.basePollingInterval;
 
                 const data = await res.json();
                 if (data.success) {
@@ -378,13 +485,17 @@ const Pollivu = {
         startPolling() {
             if (this.timer) return;
             this.timer = setInterval(async () => {
-                const cont = await this.fetchStats();
-                if (!cont) this.stopPolling();
-            }, 30000);
+                await this.fetchStats();
+            }, this.pollingInterval);
         },
 
         stopPolling() {
             if (this.timer) { clearInterval(this.timer); this.timer = null; }
+        },
+
+        restartPolling() {
+            this.stopPolling();
+            this.startPolling();
         }
     },
 

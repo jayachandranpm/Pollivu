@@ -181,6 +181,35 @@ select {
 }
 
 /* ============================================================================
+   Focus-Visible — Accessible keyboard focus indicators
+   ============================================================================ */
+:focus-visible {
+    outline: 2px solid var(--emerald);
+    outline-offset: 2px;
+}
+
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible {
+    outline: 2px solid var(--emerald);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--emerald);
+    outline-offset: 0;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Remove default outline for mouse users */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* ============================================================================
    Layout
    ============================================================================ */
 .container {
@@ -252,6 +281,7 @@ p {
     top: 0;
     z-index: var(--z-navbar);
     background: rgba(255, 255, 255, 0.95);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border-color);
     padding: var(--spacing-md) 0;
@@ -703,16 +733,14 @@ p {
    Flash Messages
    ============================================================================ */
 .flash-messages {
-    position: fixed;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     z-index: var(--z-toast);
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
     width: 100%;
     max-width: 500px;
+    margin: var(--spacing-md) auto;
     padding: 0 var(--spacing-md);
 }
 
@@ -855,6 +883,7 @@ p {
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
 }
 
@@ -1108,7 +1137,7 @@ p {
     padding: var(--spacing-md);
     margin-top: var(--spacing-lg);
     font-size: var(--font-size-sm);
-    color: #3730A3;
+    color: var(--forest-green);
 }
 
 .faq-item {

@@ -12,12 +12,15 @@ function toggleMobileMenu() {
     const menuIcon = document.querySelector('.menu-icon');
     const closeIcon = document.querySelector('.close-icon');
 
+    if (!mobileMenu || !menuIcon || !closeIcon) return;
+
     if (mobileMenu.classList.contains('hidden')) {
         mobileMenu.classList.remove('hidden');
         menuIcon.classList.add('hidden');
         closeIcon.classList.remove('hidden');
     } else {
         mobileMenu.classList.add('hidden');
+        mobileMenu.style.removeProperty('display');
         menuIcon.classList.remove('hidden');
         closeIcon.classList.add('hidden');
     }
@@ -30,12 +33,20 @@ function toggleMobileMenu() {
 function scrollToSection(sectionId) {
     const element = document.getElementById(sectionId);
     if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        const header = document.getElementById('header');
+        const headerOffset = header ? header.offsetHeight + 16 : 80;
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
     }
 
     // Close mobile menu if open
     const mobileMenu = document.getElementById('mobile-menu');
-    if (!mobileMenu.classList.contains('hidden')) {
+    if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
         toggleMobileMenu();
     }
 }
@@ -81,6 +92,8 @@ function initScrollAnimations() {
 
 function initHeaderScrollEffect() {
     const header = document.getElementById('header');
+    if (!header) return;
+
     let lastScrollY = window.scrollY;
 
     window.addEventListener('scroll', () => {

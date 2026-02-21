@@ -75,7 +75,7 @@ def api_ai_suggest():
 
 @api_bp.route('/poll/<poll_id>/live_stats')
 @limiter.limit("60 per minute")
-@cache.cached(timeout=10)
+@cache.cached(timeout=2)
 def api_poll_stats(poll_id):
     poll = Poll.query.get_or_404(poll_id)
     # Access: anyone with the poll ID can read live stats (same as the HTML results page)
@@ -84,6 +84,9 @@ def api_poll_stats(poll_id):
         'poll_id': poll_id,
         'total_votes': poll.total_votes,
         'is_active': poll.is_active,
+        'is_closed': poll.is_closed,
+        'question': poll.question,
+        'updated_at': poll.updated_at.isoformat() if poll.updated_at else None,
         'results': [opt.to_dict() for opt in poll.options]
     })
 
@@ -117,23 +120,31 @@ def api_poll_analytics(poll_id):
     if not is_creator and not is_owner and not insights_shared:
         return jsonify({'error': 'Unauthorized access'}), 403
 
-    # Votes over time (Group by Hour)
-    # Using simple date truncation for broader compatibility/simplicity
-    # For MySQL: func.date_format(Vote.voted_at, '%Y-%m-%d %H:00:00')
+    # Votes over time — supports granularity: hourly (default), daily, cumulative
     from models import Vote
     from extensions import db
     from sqlalchemy import func
+
+    granularity = request.args.get('granularity', 'hourly')
 
     timeline_data = []
     if poll.total_votes > 0:
         try:
             # Detect database dialect for compatible date truncation
             dialect = db.engine.dialect.name
-            if dialect == 'mysql':
-                time_bucket = func.date_format(Vote.voted_at, '%Y-%m-%d %H:00')
+
+            if granularity == 'daily' or granularity == 'cumulative':
+                # Group by day
+                if dialect == 'mysql':
+                    time_bucket = func.date_format(Vote.voted_at, '%Y-%m-%d')
+                else:
+                    time_bucket = func.strftime('%Y-%m-%d', Vote.voted_at)
             else:
-                # SQLite fallback
-                time_bucket = func.strftime('%Y-%m-%d %H:00', Vote.voted_at)
+                # Group by hour (default)
+                if dialect == 'mysql':
+                    time_bucket = func.date_format(Vote.voted_at, '%Y-%m-%d %H:00')
+                else:
+                    time_bucket = func.strftime('%Y-%m-%d %H:00', Vote.voted_at)
 
             results = db.session.query(
                 time_bucket.label('time_bucket'),
@@ -151,14 +162,7 @@ def api_poll_analytics(poll_id):
             current_app.logger.error(f"Analytics Error: {str(e)}")
             timeline_data = []
 
-    # Word Cloud Data (Option Text + Vote Count)
-    word_cloud_data = [
-        {'text': opt.option_text, 'weight': opt.vote_count} 
-        for opt in poll.options if opt.vote_count > 0
-    ]
-
     return jsonify({
         'success': True,
-        'timeline': timeline_data,
-        'word_cloud': word_cloud_data
+        'timeline': timeline_data
     })

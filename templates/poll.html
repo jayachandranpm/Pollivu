@@ -165,43 +165,52 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Socket.IO Client -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
 <script>
     const pollId = '{{ poll.id }}';
+    let lastTotalVotes = parseInt(document.getElementById('total-votes')?.textContent || '0');
+    let lastPollStatus = null;
+    let lastUpdatedAt = null;
 
-    // Initialize Socket.IO for real-time updates
-    const socket = io();
-    socket.on('connect', () => {
-        socket.emit('join', { poll_id: pollId });
-    });
-
-    // Listen for settings changes
-    socket.on('poll_settings_updated', (data) => {
-        if (data.poll_id !== pollId) return;
-
-        // Show notification
+    // Poll for real-time updates every 3 seconds
+    const pollInterval = setInterval(async () => {
         try {
-            if (data.is_closed === true) {
-                Toast.show('This poll has been closed by the creator.', 'info');
-            } else if (data.is_closed === false && data.message === 'Poll has been reopened') {
-                Toast.show('This poll has been reopened!', 'success');
-            } else {
-                Toast.show(data.message || 'Poll settings updated', 'info');
+            const statsRes = await fetch(`/api/poll/${pollId}/live_stats`);
+            if (!statsRes.ok) return;
+            const stats = await statsRes.json();
+
+            // Detect any settings change via updated_at timestamp
+            if (lastUpdatedAt !== null && stats.updated_at !== lastUpdatedAt) {
+                // Something changed — reload to reflect new settings
+                window.location.reload();
+                return;
             }
-        } catch(e) { console.warn('Toast unavailable:', e); }
+            lastUpdatedAt = stats.updated_at;
 
-        // Reload to reflect all server-rendered changes
-        setTimeout(() => window.location.reload(), 1500);
-    });
+            // Update vote count if changed
+            if (stats.total_votes !== lastTotalVotes) {
+                const totalEl = document.getElementById('total-votes');
+                if (totalEl) totalEl.textContent = stats.total_votes;
+                lastTotalVotes = stats.total_votes;
+            }
 
-    // Listen for new votes to update count
-    socket.on('new_vote', (data) => {
-        if (data.poll_id === pollId) {
-            const totalEl = document.getElementById('total-votes');
-            if (totalEl) totalEl.textContent = data.total_votes;
+            // Check for status changes (closed/reopened)
+            const statusKey = `${stats.is_active}`;
+            if (lastPollStatus !== null && statusKey !== lastPollStatus) {
+                if (!stats.is_active) {
+                    Toast.show('This poll has been closed by the creator.', 'info');
+                } else {
+                    Toast.show('This poll has been reopened!', 'success');
+                }
+                setTimeout(() => window.location.reload(), 1500);
+            }
+            lastPollStatus = statusKey;
+        } catch (e) {
+            // Silently ignore fetch errors (offline, etc.)
         }
-    });
+    }, 3000);
+
+    // Stop polling when user leaves the page
+    window.addEventListener('beforeunload', () => clearInterval(pollInterval));
 
     // Initialize poll voting
     if (document.getElementById('vote-form')) {

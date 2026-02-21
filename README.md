@@ -1,9 +1,8 @@
 # Pollivu — Privacy-First, Real-Time Polling Platform
 
-A cloud-native polling application where creators build polls in seconds, voters participate anonymously without sign-up, and results update live via WebSockets — all while storing **zero personal data**.
+A cloud-native polling application where creators build polls in seconds, voters participate anonymously without sign-up, and results update in near real-time — all while storing **zero personal data**.
 
-> **Live URL:** _[Insert deployed URL here]_  
-> **Test Credentials:** Email: `demo@pollivu.app` · Password: `DemoPass123!`
+> **Live URL:** [https://jayachandranpm.pythonanywhere.com](https://jayachandranpm.pythonanywhere.com)
 
 ---
 
@@ -11,12 +10,12 @@ A cloud-native polling application where creators build polls in seconds, voters
 
 | Category | Features |
 |---|---|
-| **Core** | Create polls (2–10 options), anonymous voting, real-time results via WebSocket |
-| **AI** | Generate polls with AI (Gemini, OpenAI, Claude, Ollama), AI-suggested options on edit |
+| **Core** | Create polls (2–10 options), anonymous voting, near real-time results |
+| **AI** | Generate polls with AI (Gemini, OpenAI, Claude), AI-suggested options on edit |
 | **Privacy** | Zero PII collection, session-hashed vote dedup, AES-256-GCM encrypted API keys |
 | **Sharing** | QR code generation, CSV export, public/unlisted toggle, embeddable iframe widget |
-| **Results Control** | Granular sharing toggles (chart, vote list, insights) — creators choose what’s public |
-| **Real-Time** | Live vote updates + settings sync via WebSocket (close, reopen, visibility changes) |
+| **Results Control** | Granular sharing toggles (chart, vote list, insights) — creators choose what's public |
+| **Real-Time** | Live vote counts & settings sync via short polling (3s interval) |
 | **Management** | Dashboard, edit polls, close/reopen, expiration settings, allow vote changes |
 | **Security** | CSRF protection, rate limiting, CSP headers, HSTS, PBKDF2-SHA256 passwords |
 
@@ -29,7 +28,6 @@ A cloud-native polling application where creators build polls in seconds, voters
 - **Python** 3.10+
 - **MySQL** 8.0+ (or SQLite for quick local testing)
 - **pip** (Python package manager)
-- _(Optional)_ [Ollama](https://ollama.ai) for local AI features
 
 ### 1. Clone & Setup Virtual Environment
 
@@ -68,11 +66,6 @@ FLASK_ENV=development
 
 # ── Optional: Redis (for caching & rate limiting) ────
 # REDIS_URL=redis://localhost:6379/0
-
-# ── Optional: AI Providers (configure in Settings UI) ─
-# Users set their own API keys via the Settings page.
-# For local AI with Ollama, just install Ollama and run:
-#   ollama pull qwen3:8b
 ```
 
 ### 3. Initialize the Database
@@ -95,17 +88,6 @@ python3 app.py
 ```
 
 Open **http://localhost:5000** in your browser.
-
-### 5. (Optional) Enable Local AI
-
-```bash
-# Install Ollama from https://ollama.ai
-ollama pull qwen3:8b
-
-# In the app: go to Settings → AI Providers → Ollama
-# Set URL: http://localhost:11434
-# Set Model: qwen3:8b
-```
 
 ---
 
@@ -131,9 +113,9 @@ ollama pull qwen3:8b
 ```
 Clients (Browser)
       │
-      ▼ HTTPS / WSS
+      ▼ HTTPS
 ┌──────────────────────┐
-│   Gunicorn + Eventlet │  ← WSGI server with WebSocket support
+│   Gunicorn (threads)  │  ← 2 workers × 4 threads
 │   ┌────────────────┐  │
 │   │  Flask App     │  │
 │   │  ├── Auth BP   │  │  ← Blueprints for modular routing
@@ -156,13 +138,13 @@ Clients (Browser)
 
 | Layer | Technology | Why |
 |---|---|---|
-| **Compute** | Gunicorn + Eventlet on PaaS | Supports WebSockets; no infra management |
+| **Compute** | Gunicorn on PythonAnywhere | Simple, reliable, no infra management |
 | **Framework** | Flask + Jinja2 | Lightweight; no build step; fast page loads |
 | **Database** | MySQL 8.0 | Relational integrity for polls→options→votes |
-| **Real-time** | Flask-SocketIO | Live vote broadcasting & settings sync per poll room |
+| **Real-time** | Short polling (3s `setInterval`) | Works on all platforms; no thread blocking; uses `updated_at` for change detection |
 | **Auth** | Flask-Login + PBKDF2-SHA256 | Session-based; voters need no account |
 | **Encryption** | AES-256-GCM | API keys encrypted at rest in database |
-| **AI** | Gemini / OpenAI / Claude / Ollama | User chooses provider; Ollama for fully local AI |
+| **AI** | Gemini / OpenAI / Claude | User chooses provider in Settings |
 
 > 📄 **Full architecture document:** See [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md)
 
@@ -179,19 +161,18 @@ POLL PAL/
 ├── forms.py                  # Flask-WTF form definitions
 ├── utils.py                  # Utility functions (ID generation, hashing, sanitization)
 ├── encryption.py             # AES-256-GCM encryption module
-├── ai_service.py             # Multi-provider AI service (Gemini, OpenAI, Claude, Ollama)
+├── ai_service.py             # Multi-provider AI service (Gemini, OpenAI, Claude)
 ├── ai_prompts.py             # Centralized AI prompt templates
-├── Procfile                  # Gunicorn command for PaaS deployment
-├── requirements.txt          # Python dependencies
+├── tasks.py                  # Background task utilities
+├── Procfile                  # Gunicorn command for deployment
+├── requirements.txt          # Python dependencies (16 packages)
 ├── PRODUCT_ARCHITECTURE.md   # Full architecture & product document
-├── DEPLOYMENT.md             # Step-by-step deployment guide
 │
 ├── blueprints/               # Modular route handlers
 │   ├── auth/routes.py        #   Login, register, settings
 │   ├── dashboard/routes.py   #   User dashboard
 │   ├── polls/routes.py       #   Poll CRUD, voting, embed, AI suggest
-│   ├── polls/events.py       #   WebSocket event handlers (join/leave rooms)
-│   ├── api/routes.py         #   JSON API for AI features
+│   ├── api/routes.py         #   JSON API (AI, live stats, analytics)
 │   └── main/routes.py        #   Landing page, public routes
 │
 ├── services/                 # Business logic layer
@@ -206,9 +187,9 @@ POLL PAL/
 │   ├── create_poll.html      #   Manual poll creation
 │   ├── create_poll_ai.html   #   AI-assisted poll creation
 │   ├── edit_poll.html        #   Edit existing poll (incl. share toggles)
-│   ├── poll.html             #   Voting interface (WebSocket-enabled)
-│   ├── results.html          #   Results with live charts & conditional sections
-│   ├── embed_poll.html       #   Lightweight embeddable iframe widget
+│   ├── poll.html             #   Voting interface (short-polling enabled)
+│   ├── results.html          #   Results with live charts & analytics
+│   ├── settings.html         #   AI provider configuration
 │   └── auth/                 #   Login & register
 │
 ├── static/
@@ -224,38 +205,37 @@ POLL PAL/
 
 ## 🚢 Deployment
 
-### Railway (Recommended)
+### PythonAnywhere (Current Production)
 
 1. Push code to GitHub
-2. Connect repo to [Railway](https://railway.app)
-3. Add a **MySQL** plugin
-4. Set environment variables in Railway dashboard
-5. Railway auto-detects `Procfile` and deploys
+2. On PythonAnywhere, clone or pull the repo
+3. Create a virtualenv with Python 3.12: `mkvirtualenv --python=/usr/bin/python3.12 venv`
+4. Install dependencies: `pip install -r requirements.txt`
+5. Set up MySQL database in the **Databases** tab
+6. Configure WSGI file to point to `app:app`
+7. Set environment variables in the WSGI file or `.env`
+8. Reload the web app
 
 ### Render
 
 1. Push code to GitHub
 2. Create a **Web Service** on [Render](https://render.com)
-3. Set build command: `pip install -r requirements.txt`
-4. Set start command: `gunicorn app:app`
-5. Add a **MySQL** database
-6. Set environment variables
+3. Add `runtime.txt` with `python-3.12.x` (avoid Python 3.13+ for compatibility)
+4. Set build command: `pip install -r requirements.txt`
+5. Set start command: `gunicorn -w 2 --threads 4 app:app`
+6. Add a MySQL database and set environment variables
 
 ### Docker (Any Cloud)
 
 ```dockerfile
-FROM python:3.11-slim
+FROM python:3.12-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 EXPOSE 5000
-CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "-b", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "-w", "2", "--threads", "4", "-b", "0.0.0.0:5000", "--timeout", "120", "app:app"]
 ```
-
-> 📄 **Detailed deployment guide:** See [DEPLOYMENT.md](DEPLOYMENT.md)
-
-> 📄 **Full architecture document:** See [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md)
 
 ---
 
@@ -267,7 +247,7 @@ CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "-b", "0.0.0.0:5000", 
 | **Anonymous vote dedup** | `SHA-256(session_id + poll_id)` — prevents double-voting without identifying users |
 | **Encrypted secrets** | API keys stored with AES-256-GCM; passwords hashed with PBKDF2-SHA256 |
 | **Input sanitization** | All user input cleaned with Bleach before storage |
-| **Rate limiting** | 30 votes/min, 10 AI calls/min, 200 requests/day default |
+| **Rate limiting** | 30 votes/min, 10 AI calls/min, 60 live_stats/min |
 | **Security headers** | CSP, HSTS, X-Frame-Options, X-Content-Type-Options on every response |
 | **Embed isolation** | Embed route uses permissive CSP (`frame-ancestors *`); all other routes locked to `SAMEORIGIN` |
 | **CSRF protection** | All POST forms protected with Flask-WTF CSRF tokens |
@@ -280,6 +260,29 @@ CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "-b", "0.0.0.0:5000", 
 source venv/bin/activate
 python3 -m pytest tests/ -v
 ```
+
+---
+
+## 📦 Dependencies
+
+| Package | Version | Purpose |
+|---|---|---|
+| Flask | 3.1.2 | Web framework |
+| Flask-SQLAlchemy | 3.1.1 | ORM |
+| Flask-WTF | 1.2.2 | Forms & CSRF |
+| Flask-Limiter | 4.1.1 | Rate limiting |
+| Flask-Migrate | 4.1.0 | DB migrations |
+| Flask-Login | 0.6.3 | Authentication |
+| Flask-Caching | 2.3.1 | Response caching |
+| gunicorn | 24.1.1 | WSGI server |
+| cryptography | 46.0.3 | AES-256 encryption |
+| bleach | 6.3.0 | Input sanitization |
+| qrcode | 8.2 | QR code generation |
+| requests | 2.32.5 | HTTP client (AI APIs) |
+| python-dotenv | 1.2.1 | Environment variables |
+| email_validator | 2.3.0 | Email validation |
+| mysql-connector-python | 9.5.0 | MySQL driver |
+| redis | 7.1.0 | Cache backend |
 
 ---
 

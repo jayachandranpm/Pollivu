@@ -24,5 +24,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/')" || exit 1
 
-# Start with Gunicorn + Eventlet for WebSocket support
-CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "-b", "0.0.0.0:5000", "--timeout", "120", "app:app"]
+# Start with Gunicorn (SSE for real-time, no WebSocket/Eventlet needed)
+CMD ["gunicorn", "-w", "2", "--threads", "4", "-b", "0.0.0.0:5000", "--timeout", "120", "app:app"]
