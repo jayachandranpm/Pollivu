@@ -14,7 +14,7 @@ import logging
 
 from config import config
 from services.config_validation import validate_config
-from extensions import db, migrate, csrf, login_manager, limiter, socketio, cache
+from extensions import db, migrate, csrf, login_manager, limiter, cache
 from models import User
 from utils import generate_session_id, format_time_remaining
 
@@ -22,9 +22,7 @@ from utils import generate_session_id, format_time_remaining
 validate_config()
 
 # Initialize Flask app
-# On Vercel/serverless (read-only filesystem), use /tmp for instance path
-_instance_path = '/tmp/instance' if os.path.exists('/var/task') else None
-app = Flask(__name__, instance_path=_instance_path)
+app = Flask(__name__)
 app.config.from_object(config[os.getenv('FLASK_ENV', 'production')])
 
 # Initialize extensions
@@ -36,14 +34,6 @@ login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
 limiter.init_app(app)
-
-# SocketIO — restrict CORS in production
-if os.getenv('FLASK_ENV') == 'development':
-    _cors_origins = '*'
-else:
-    _origins_raw = os.getenv('ALLOWED_ORIGINS', '')
-    _cors_origins = [o.strip() for o in _origins_raw.split(',') if o.strip()] or []
-socketio.init_app(app, cors_allowed_origins=_cors_origins)
 cache.init_app(app)
 
 # Create tables on startup if they don't exist
@@ -185,4 +175,4 @@ def ratelimit_handler(e):
 
 if __name__ == '__main__':
     is_dev = os.getenv('FLASK_ENV') == 'development'
-    socketio.run(app, debug=is_dev)
+    app.run(debug=is_dev)
